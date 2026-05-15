@@ -1,96 +1,97 @@
-# Wrap-up · 总结 + 下一步(10 min)
+﻿# Wrap-up 路 鎬荤粨 + 涓嬩竴姝?10 min)
 
-## 5.1 总结口诀
+## 5.1 鎬荤粨鍙ｈ瘈
 
-- **Soul / Skills / Tools** 是 agent harness 的 DNA(`personas/` / `skills/` / `tools/`)
-- **`azd up` + `azd deploy`** 是部署的双手柄(一键创建 vs 增量发布)
-- **`gen_ai.response.id`** 是 trace 与 eval 的 join key,埋点务必透传
-- **GitHub Copilot** 是把概念变代码的力放大器:**Copilot 是手,你是脑**
+- **Soul / Skills / Tools** 鏄?agent harness 鐨?DNA(`personas/` / `skills/` / `tools/`)
+- **`azd up` + `azd deploy`** 鏄儴缃茬殑鍙屾墜鏌?涓€閿垱寤?vs 澧為噺鍙戝竷)
+- **`gen_ai.response.id`** 鏄?trace 涓?eval 鐨?join key,鍩嬬偣鍔″繀閫忎紶
+- **GitHub Copilot** 鏄妸姒傚康鍙樹唬鐮佺殑鍔涙斁澶у櫒:**Copilot 鏄墜,浣犳槸鑴?*
 
-## 5.2 你今天搭出来的东西
+## 5.2 浣犱粖澶╂惌鍑烘潵鐨勪笢瑗?
 
 ```
-你
- ↓
-[本地 agentdev 调试环境]
- ↓ azd deploy
+浣?
+ 鈫?
+[鏈湴 agentdev 璋冭瘯鐜]
+ 鈫?azd deploy
 [Foundry Hosted Agent: billing-agent v1]
- ↓ OTel 自动埋点
+ 鈫?OTel 鑷姩鍩嬬偣
 [Application Insights]
- ↓ KQL
-[Static Web App 仪表板]   ← 你的运维入口
+ 鈫?KQL
+[Static Web App 浠〃鏉縘   鈫?浣犵殑杩愮淮鍏ュ彛
 ```
 
-加上 workshop 自带的 **Track A 客户支持骨架**,你已经走完了从 0 到 1 的完整闭环。
+鍔犱笂 workshop 鑷甫鐨?**Track A 瀹㈡埛鏀寔楠ㄦ灦**,浣犲凡缁忚蛋瀹屼簡浠?0 鍒?1 鐨勫畬鏁撮棴鐜€?
 
-## 5.3 下一步学习路径
+## 5.3 涓嬩竴姝ュ涔犺矾寰?
 
-### Phase 3 评估闭环(还没在 workshop 里跑)
+### Phase 3 璇勪及闂幆(杩樻病鍦?workshop 閲岃窇)
 
-把 trace 转成评估数据集 → 跑 batch eval → 比较版本 → `prompt_optimize` → redeploy:
+鎶?trace 杞垚璇勪及鏁版嵁闆?鈫?璺?batch eval 鈫?姣旇緝鐗堟湰 鈫?`prompt_optimize` 鈫?redeploy:
 
-- 参考 [`agent-observability-evaluation.md`](../../agent-observability-evaluation.md):
-  - §5 Evaluators 选型
-  - §6 Datasets 四类(seed / traces / curated / prod)
-  - §7 Batch Evaluation
-  - §9 优化循环
+- 鍙傝€?[`agent-observability-evaluation.md`](../../agent-observability-evaluation.md):
+  - 搂5 Evaluators 閫夊瀷
+  - 搂6 Datasets 鍥涚被(seed / traces / curated / prod)
+  - 搂7 Batch Evaluation
+  - 搂9 浼樺寲寰幆
 
-### 多 agent 编排
+### 澶?agent 缂栨帓
 
-把今天的 4 个 agent 真正串起来:
+鎶婁粖澶╃殑 4 涓?agent 鐪熸涓茶捣鏉?
 
-- `workflow.yaml`(声明式,推荐做主路由)
-- `WorkflowBuilder`(代码式,复杂控制流)
-- `connected_agents`(只做极简 demo)
+- `workflow.yaml`(澹版槑寮?鎺ㄨ崘鍋氫富璺敱)
+- `WorkflowBuilder`(浠ｇ爜寮?澶嶆潅鎺у埗娴?
+- `connected_agents`(鍙仛鏋佺畝 demo)
 
-参考 [`agent-harness-architecture.md`](../../agent-harness-architecture.md) §7。workshop 仓库 `track-A/workflows/triage.workflow.yaml` 已经给了一个起点。
+鍙傝€?[`agent-harness-architecture.md`](../../agent-harness-architecture.md) 搂7銆倃orkshop 浠撳簱 `track-A/workflows/triage.workflow.yaml` 宸茬粡缁欎簡涓€涓捣鐐广€?
 
-### 自建 MCP server
+### 鑷缓 MCP server
 
-把内部能力 MCP 化,在 agent.manifest.yaml 里 `type: mcp` 引用:
+鎶婂唴閮ㄨ兘鍔?MCP 鍖?鍦?agent.manifest.yaml 閲?`type: mcp` 寮曠敤:
 
-- Azure Container Apps 模板:[`Azure-Samples/mcp-container-ts`](https://github.com/Azure-Samples/mcp-container-ts)
-- Azure Functions 模板:[`Azure-Samples/mcp-sdk-functions-hosting-python`](https://github.com/Azure-Samples/mcp-sdk-functions-hosting-python)
+- Azure Container Apps 妯℃澘:[`Azure-Samples/mcp-container-ts`](https://github.com/Azure-Samples/mcp-container-ts)
+- Azure Functions 妯℃澘:[`Azure-Samples/mcp-sdk-functions-hosting-python`](https://github.com/Azure-Samples/mcp-sdk-functions-hosting-python)
 
-参考 [`agent-harness-architecture.md`](../../agent-harness-architecture.md) §6。
+鍙傝€?[`agent-harness-architecture.md`](../../agent-harness-architecture.md) 搂6銆?
 
-### CI/CD 接入
+### CI/CD 鎺ュ叆
 
-`.github/workflows/agent-eval.yml`:PR 门禁跑 P0 smoke
-`.github/workflows/agent-eval-scheduled.yml`:nightly trace harvest + 回归
+`.github/workflows/agent-eval.yml`:PR 闂ㄧ璺?P0 smoke
+`.github/workflows/agent-eval-scheduled.yml`:nightly trace harvest + 鍥炲綊
 
-参考 [`agent-observability-evaluation.md`](../../agent-observability-evaluation.md) §11。
+鍙傝€?[`agent-observability-evaluation.md`](../../agent-observability-evaluation.md) 搂11銆?
 
-## 5.4 资源清理
+## 5.4 璧勬簮娓呯悊
 
-> 资源 RG 会保留 7 天供你继续探索。彻底删:
+> 璧勬簮 RG 浼氫繚鐣?7 澶╀緵浣犵户缁帰绱€傚交搴曞垹:
 
 ```powershell
 azd down --purge --force --no-prompt
 ```
 
-- 删整个 RG(Foundry + 模型 + ACR + App Insights + SWA 全没)
-- `--purge` 触发 Foundry account 软删除清理,**避免** 48h 内同名重建失败
+- 鍒犳暣涓?RG(Foundry + 妯″瀷 + ACR + App Insights + SWA 鍏ㄦ病)
+- `--purge` 瑙﹀彂 Foundry account 杞垹闄ゆ竻鐞?**閬垮厤** 48h 鍐呭悓鍚嶉噸寤哄け璐?
 
-## 5.5 反馈
+## 5.5 鍙嶉
 
-请扫码 / 点链接填反馈表(讲师现场提供 URL),3 分钟完成。
-你的吐槽与建议会直接进下一期 workshop 改进列表。
+璇锋壂鐮?/ 鐐归摼鎺ュ～鍙嶉琛?璁插笀鐜板満鎻愪緵 URL),3 鍒嗛挓瀹屾垚銆?
+浣犵殑鍚愭Ы涓庡缓璁細鐩存帴杩涗笅涓€鏈?workshop 鏀硅繘鍒楄〃銆?
 
-## 5.6 相关链接
+## 5.6 鐩稿叧閾炬帴
 
 - [Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/overview/agent-framework-overview)
 - [Microsoft Foundry Hosted Agents](https://learn.microsoft.com/azure/ai-foundry/agents/concepts/hosted-agents)
-- [`azd ai agent` 扩展](https://aka.ms/azdaiagent/docs)
-- [Foundry Samples (Python)](https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/hosted-agents)
+- [`azd ai agent` 鎵╁睍](https://aka.ms/azdaiagent/docs)
+- [Foundry Samples (Python)](https://github.com/azure-ai-foundry/foundry-samples/tree/main/samples/python/hosted-agents)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
 
-## 5.7 致谢
+## 5.7 鑷磋阿
 
-本 workshop 的素材来自三份内部调研:
+鏈?workshop 鐨勭礌鏉愭潵鑷笁浠藉唴閮ㄨ皟鐮?
 
 - `azd-foundry-research.md`
 - `agent-harness-architecture.md`
 - `agent-observability-evaluation.md`
 
-感谢调研作者们的整理工作。下一期再见 👋
+鎰熻阿璋冪爺浣滆€呬滑鐨勬暣鐞嗗伐浣溿€備笅涓€鏈熷啀瑙?馃憢
+

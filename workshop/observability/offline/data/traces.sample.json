@@ -1,4 +1,4 @@
-{
+﻿{
   "agent_name": "billing-agent",
   "generated_at": "2026-05-14T10:30:00Z",
   "time_window_minutes": 60,
@@ -21,10 +21,10 @@
       "spans": [
         {"name": "POST /responses", "type": "request", "start": 0, "duration_ms": 1840, "success": true},
         {"name": "invoke_agent: billing-agent", "type": "invoke_agent", "start": 5, "duration_ms": 1820, "success": true},
-        {"name": "chat: gpt-4o-mini", "type": "chat", "start": 30, "duration_ms": 410, "success": true, "tokens_in": 420, "tokens_out": 80},
+        {"name": "chat: gpt-5-mini", "type": "chat", "start": 30, "duration_ms": 410, "success": true, "tokens_in": 420, "tokens_out": 80},
         {"name": "execute_tool: crm_lookup", "type": "execute_tool", "start": 450, "duration_ms": 120, "success": true, "tool_name": "crm_lookup"},
         {"name": "execute_tool: refund_quote_script", "type": "execute_tool", "start": 580, "duration_ms": 240, "success": true, "tool_name": "refund_quote_script"},
-        {"name": "chat: gpt-4o-mini", "type": "chat", "start": 830, "duration_ms": 980, "success": true, "tokens_in": 890, "tokens_out": 320}
+        {"name": "chat: gpt-5-mini", "type": "chat", "start": 830, "duration_ms": 980, "success": true, "tokens_in": 890, "tokens_out": 320}
       ]
     },
     {
@@ -35,7 +35,7 @@
       "spans": [
         {"name": "POST /responses", "type": "request", "start": 0, "duration_ms": 2210, "success": false, "result_code": 500},
         {"name": "invoke_agent: billing-agent", "type": "invoke_agent", "start": 5, "duration_ms": 2190, "success": false},
-        {"name": "chat: gpt-4o-mini", "type": "chat", "start": 25, "duration_ms": 380, "success": true, "tokens_in": 350, "tokens_out": 70},
+        {"name": "chat: gpt-5-mini", "type": "chat", "start": 25, "duration_ms": 380, "success": true, "tokens_in": 350, "tokens_out": 70},
         {"name": "execute_tool: crm_lookup", "type": "execute_tool", "start": 410, "duration_ms": 1750, "success": false, "tool_name": "crm_lookup", "error_type": "tool_error"}
       ]
     },
@@ -47,7 +47,7 @@
       "spans": [
         {"name": "POST /responses", "type": "request", "start": 0, "duration_ms": 720, "success": true},
         {"name": "invoke_agent: billing-agent", "type": "invoke_agent", "start": 5, "duration_ms": 700, "success": true},
-        {"name": "chat: gpt-4o-mini", "type": "chat", "start": 20, "duration_ms": 680, "success": true, "tokens_in": 410, "tokens_out": 120, "finish_reason": "stop", "refusal": true}
+        {"name": "chat: gpt-5-mini", "type": "chat", "start": 20, "duration_ms": 680, "success": true, "tokens_in": 410, "tokens_out": 120, "finish_reason": "stop", "refusal": true}
       ]
     }
   ],
@@ -69,3 +69,4 @@
     {"t": "2026-05-14T10:20:00Z", "qps": 0.08, "p95_ms": 3870, "failure_rate": 0.06}
   ]
 }
+

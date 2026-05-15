@@ -6,7 +6,7 @@
 
 | 模型 / SKU | 区域 | 容量 |
 |-----------|------|------|
-| `gpt-4o-mini` GlobalStandard | northcentralus | 10K TPM |
+| `gpt-5-mini` GlobalStandard | northcentralus | 10K TPM |
 
 > 30 位学员 = 300K TPM。如果订阅默认 < 300K,提前在 Foundry 门户 → Management center → Quotas 提交申请,Microsoft 团队批准通常 1-3 个工作日。
 > 应急区域:`westus3`(已验证有 hosted agent 支持,但模型可用性略有差异)。

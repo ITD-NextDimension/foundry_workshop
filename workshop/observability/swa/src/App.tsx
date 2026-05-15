@@ -1,4 +1,4 @@
-import { Link, Route, Routes, useLocation } from "react-router-dom";
+﻿import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { Overview } from "./pages/Overview";
 import { Failures } from "./pages/Failures";
 import { Conversation } from "./pages/Conversation";
@@ -19,7 +19,7 @@ export function App() {
         <h1 style={{ margin: 0, fontSize: 18 }}>Workshop Observability</h1>
         <span style={{ background: "#2a2f3a", color: "#8a8f99", padding: "2px 8px", borderRadius: 4, fontSize: 12 }}>SWA</span>
         <span style={{ flex: 1 }} />
-        <a href="https://github.com/microsoft-foundry/foundry-samples" style={{ color: "#8a8f99", fontSize: 12 }}>foundry-samples ↗</a>
+        <a href="https://github.com/azure-ai-foundry/foundry-samples" style={{ color: "#8a8f99", fontSize: 12 }}>foundry-samples 鈫?/a>
       </header>
 
       <nav style={{ background: "#161a22", padding: "0 24px", display: "flex", gap: 8, borderBottom: "1px solid #2a2f3a" }}>
@@ -55,8 +55,9 @@ export function App() {
       </main>
 
       <footer style={{ padding: "16px 24px", color: "#8a8f99", fontSize: 12, textAlign: "center" }}>
-        workshop · SWA observability · 不登 Azure Portal,所有数据从 SWA Functions 经 App Insights REST API 拿
+        workshop 路 SWA observability 路 涓嶇櫥 Azure Portal,鎵€鏈夋暟鎹粠 SWA Functions 缁?App Insights REST API 鎷?
       </footer>
     </div>
   );
 }
+

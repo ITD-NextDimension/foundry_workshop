@@ -39,7 +39,7 @@ agent.manifest.yaml 要求:
 ## 3.4 注册进 azd
 
 ```powershell
-azd ai agent init -m src/billing_agent/agent.yaml
+azd ai agent init -m src/billing_agent/agent.manifest.yaml
 ```
 
 执行后查看 `azure.yaml`,应该多出一段:
@@ -57,7 +57,7 @@ services:
         resources: { cpu: "1", memory: 2Gi }
         scale:    { maxReplicas: 3, minReplicas: 1 }
       deployments:
-        - name: gpt-4o-mini
+        - name: gpt-5-mini
           ...
 ```
 

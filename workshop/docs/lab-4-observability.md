@@ -71,10 +71,10 @@ foreach ($p in $prompts) {
 ```
 ▼ POST /responses                                (request)
   ▼ invoke_agent: billing-agent                 (top-level)
-    ├─ chat: gpt-4o-mini                         (LLM 决策)
+    ├─ chat: gpt-5-mini                          (LLM 决策)
     ├─ execute_tool: crm_lookup                  (你的 @ai_function)
     ├─ execute_tool: refund_quote_script         (skill 触发的脚本)
-    └─ chat: gpt-4o-mini                         (LLM 收尾)
+    └─ chat: gpt-5-mini                          (LLM 收尾)
 ```
 
 每个 span 点开能看 attributes(`gen_ai.conversation.id` / `gen_ai.response.id` / `gen_ai.usage.input_tokens` 等)。
