@@ -14,8 +14,16 @@ from pathlib import Path
 _FM_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 _INCLUDE_RE = re.compile(r"\{\{include:\s*([^\}]+?)\s*\}\}")
 
-REQUIRED_FRONTMATTER = ("agent", "version", "owner")
-REQUIRED_SECTIONS = ("# Role",)
+REQUIRED_FRONTMATTER = ("version", "owner")
+# 接受任一标识字段
+IDENT_FIELDS = ("name", "agent")
+# 接受英文或中文角色小节
+ROLE_SECTION_PATTERNS = (
+    re.compile(r"^#\s+Role\b", re.MULTILINE),
+    re.compile(r"^#\s+角色", re.MULTILINE),
+    re.compile(r"^##\s+角色", re.MULTILINE),
+    re.compile(r"^##\s+Role\b", re.MULTILINE),
+)
 
 
 def _parse_frontmatter(text: str) -> dict[str, str] | None:
@@ -66,10 +74,11 @@ def lint(path: Path) -> tuple[bool, list[str]]:
     for key in REQUIRED_FRONTMATTER:
         if not fm.get(key):
             errors.append(f"missing frontmatter field: {key}")
+    if not any(fm.get(k) for k in IDENT_FIELDS):
+        errors.append(f"missing identifier field (need one of {IDENT_FIELDS})")
 
-    for sec in REQUIRED_SECTIONS:
-        if sec not in text:
-            errors.append(f"missing section heading: {sec}")
+    if not any(p.search(text) for p in ROLE_SECTION_PATTERNS):
+        errors.append("missing role section (expect '# Role' or '## 角色')")
 
     if is_template:
         # Skip include resolution for templates.
@@ -106,9 +115,10 @@ def main(argv: list[str] | None = None) -> int:
             fm = _parse_frontmatter(p.read_text(encoding="utf-8")) or {}
             extends = fm.get("extends", "")
             version = fm.get("version", "?")
+            ident = fm.get("name") or fm.get("agent") or p.stem
             tag = "template" if p.name.endswith(".template.md") else ""
             tag_str = f" [{tag}]" if tag else ""
-            print(f"✅ persona {p.name}{tag_str} OK · extends=[{extends}] · version={version}")
+            print(f"✅ persona {ident}{tag_str} OK · extends=[{extends}] · version={version}")
         else:
             failed += 1
             print(f"❌ persona {p}:")

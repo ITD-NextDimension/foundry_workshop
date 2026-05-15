@@ -30,6 +30,18 @@ if (-not $endpoint) {
     exit 1
 }
 
+# Foundry hosted agent responses endpoints live under
+#   .../agents/<name>/endpoint/protocols/openai/responses?api-version=<ver>
+# (not the old `/agents/<name>/responses` path). `azd ai agent init` exports the
+# full URL into env as AGENT_<UPPER_SNAKE_AGENT_NAME>_RESPONSES_ENDPOINT;
+# prefer that if available, otherwise build it from the project endpoint.
+$envVarName = "AGENT_" + ($AgentName.ToUpper() -replace '[^A-Z0-9]', '_') + "_RESPONSES_ENDPOINT"
+$responsesUrl = & azd env get-value $envVarName 2>$null
+if (-not $responsesUrl) {
+    $apiVersion = '2025-11-15-preview'
+    $responsesUrl = "$endpoint/agents/$AgentName/endpoint/protocols/openai/responses?api-version=$apiVersion"
+}
+
 $token = az account get-access-token --resource https://ai.azure.com --query accessToken -o tsv 2>$null
 if (-not $token) {
     Write-Host "❌ Could not get token. Re-run: az login --service-principal -u <appId> -p <secret> --tenant <tid>" -ForegroundColor Red
@@ -50,7 +62,7 @@ if ($StatusOnly) {
     }
 }
 
-$url = "$endpoint/agents/$AgentName/responses"
+$url = $responsesUrl
 $body = @{ input = $Prompt } | ConvertTo-Json -Depth 8
 
 Write-Host "→ POST $url" -ForegroundColor Cyan

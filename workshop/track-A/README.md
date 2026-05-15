@@ -1,6 +1,8 @@
-# Track A · 企业客户支持 Agent Harness(参考实现)
+# Track A · 市场/竞品研究 Agent（默认场景）
 
-> 一个**完整可跑**的客户支持多 agent harness,作为 workshop 讲师 demo + Track A 学员的对照模板。
+> Workshop **默认业务场景**。学员两条路径二选一：
+> A. 直接跑这套参考实现 → 部署到自己的 hosted agent；
+> B. 用本套架子换上自己的业务（参考 `personas/research-agent.md` + `tools/web_search.py` 的写法）。
 
 ## 架构
 
@@ -8,85 +10,80 @@
 用户问题
    │
    ▼
-[TriageAgent] ── 分类 ──┬─→ [TechSupportAgent]  + KB 检索 + 工单创建
-                       ├─→ [BillingAgent]      + 退款额度计算 + CRM 更新
-                       ├─→ [KBAgent]           + 文档检索 + 引用
-                       └─→ 直接答 / 兜底
+[ResearchAgent]
+   ├─ web_search   ← Bing / Google CSE / mock 自动回退
+   ├─ web_fetch    ← httpx + 正文抽取
+   └─ report_builder ← schema 校验 + 引用编号去重 + accessedAt 自动填
 ```
 
 ## 目录
 
 ```
 track-A/
-├── personas/                 # Soul (markdown)
-│   ├── shared/
-│   │   ├── guardrails.md
-│   │   ├── handoff-protocol.md
-│   │   └── citation-format.md
-│   ├── triage-agent.md
-│   ├── billing-agent.md
-│   ├── tech-support-agent.md
-│   └── kb-agent.md
-├── skills/                   # MAF SkillsProvider 加载
-│   ├── refund-quote/
-│   │   ├── SKILL.md
-│   │   └── scripts/quote.py
-│   ├── ticket-template/
-│   │   ├── SKILL.md
-│   │   └── templates/{tech-bug.md, billing-dispute.md}
-│   └── kb-search/SKILL.md
-├── tools/                    # client-side @ai_function (Python)
-│   ├── crm.py
-│   ├── ticketing.py
-│   ├── handoff.py
-│   └── _shared/auth.py
-├── src/                      # 每个 agent 一个子目录
-│   ├── billing_agent/
+├── personas/
+│   ├── shared/guardrails.md           # 通用 guardrails（中性，调研向）
+│   └── research-agent.md              # Soul：调研角色 + 输出契约
+├── skills/
+│   ├── market-research/SKILL.md       # 4 步流程：拆解→检索→整合→报告
+│   └── citation-format/SKILL.md       # 引用与脚注规范
+├── tools/                             # @ai_function (Python)
+│   ├── web_search.py
+│   ├── web_fetch.py
+│   ├── report_builder.py
+│   └── _shared/auth.py                # 通用凭据工厂（DefaultAzureCredential）
+├── src/
+│   ├── research_agent/
 │   │   ├── main.py
-│   │   ├── agent.yaml
-│   │   ├── agent.manifest.yaml
-│   │   ├── Dockerfile
+│   │   ├── agent.yaml                 # hosted agent 部署元数据
+│   │   ├── agent.manifest.yaml        # 运行时（模型 + server-side tools）
+│   │   ├── Dockerfile                 # linux/amd64
 │   │   └── requirements.txt
-│   ├── triage_agent/         # 同上结构
-│   ├── tech_support_agent/   # 同上结构
-│   ├── kb_agent/             # 同上结构
-│   └── shared/
-│       ├── persona.py        # load_persona() with {{include}}
-│       ├── client_factory.py # FoundryChatClient 工厂
-│       └── skill_runner.py   # 沙箱 script_runner
-├── workflows/                # L4 编排
-│   └── triage.workflow.yaml
-├── .foundry/
-│   └── agent-metadata.yaml   # project endpoint / agent 名 / testCases
-├── tests/unit/               # tool + skill_runner 单测
-├── azure.yaml                # azd 入口(workshop 自动注入)
-├── requirements.txt          # 顶层(本地 agentdev 用)
-└── README.md                 # 本文件
+│   └── shared/                        # 通用 persona_loader / client_factory / skill_runner
+├── tests/unit/test_tools.py
+├── azure.yaml                         # 只声明 research-agent 一个 service
+├── .env.example                       # 从讲师下发的凭据填写
+├── .foundry/agent-metadata.yaml       # Phase 3 评估占位
+├── requirements.txt
+└── README.md
 ```
 
-## 本地跑通(Lab 2 末尾)
+## 本地跑通（Lab 2）
 
 ```powershell
 # 1. 装依赖
 pip install -r requirements.txt
 
-# 2. 环境变量
-$env:AZURE_AI_PROJECT_ENDPOINT      = azd env get-value AZURE_AI_PROJECT_ENDPOINT
-$env:FOUNDRY_MODEL_DEPLOYMENT_NAME  = azd env get-value AZURE_AI_MODEL_DEPLOYMENT_NAME
+# 2. 环境变量（从讲师下发的凭据复制到 .env）
+Copy-Item .env.example .env
+notepad .env       # 填 SP / endpoint / 模型 / 学员后缀
 
-# 3. 起 billing-agent
-agentdev run src/billing_agent/main.py --port 8087
+# 3. 加载 .env（PowerShell）
+Get-Content .env | Where-Object { $_ -match '^\w' } | ForEach-Object {
+  $k, $v = $_ -split '=', 2; [Environment]::SetEnvironmentVariable($k, $v, 'Process')
+}
 
-# 4. 另一个终端发请求
-$body = @{ input = "我是 Acme 企业版客户,上月用量 10%,能退多少?" } | ConvertTo-Json
+# 4. 启动
+agentdev run src/research_agent/main.py --port 8087
+
+# 5. 另一个终端发请求
+$body = @{ input = "帮我研究'消费级 AI 笔记应用'品类，2025 重点对比 5 家" } | ConvertTo-Json
 Invoke-RestMethod -Method POST -Uri "http://localhost:8087/responses" -ContentType "application/json" -Body $body
 ```
 
-## 部署到 Foundry(Lab 3)
+## 部署到 Foundry（Lab 3）
 
 ```powershell
-azd ai agent init -m src/billing_agent/agent.yaml
-azd deploy billing-agent
+azd env set AGENT_NAME       research-agent-$env:STUDENT_SUFFIX
+azd env set AZURE_AI_PROJECT_ENDPOINT $env:AZURE_AI_PROJECT_ENDPOINT
+azd env set AZURE_AI_MODEL_DEPLOYMENT_NAME $env:AZURE_AI_MODEL_DEPLOYMENT_NAME
+
+azd deploy research-agent
+..\workshop-scripts\invoke-hosted.ps1 -AgentName "research-agent-$env:STUDENT_SUFFIX" -Prompt "ping"
 ```
 
-详见 [`../docs/lab-3-deploy.md`](../docs/lab-3-deploy.md)。
+详见 [`../docs/lab-3-update-hosted-agent.md`](../docs/lab-3-update-hosted-agent.md)。
+
+## 试试 mock 模式
+
+无 `BING_SEARCH_API_KEY` / `GOOGLE_CSE_*` 时，`web_search` 自动走本地 mock；`WORKSHOP_WEB_FETCH_FORCE_MOCK=1` 强制 `web_fetch` 走 mock。两者一起开就能完全离线 vibe coding。
+

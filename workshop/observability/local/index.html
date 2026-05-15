@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Workshop Observability · Local</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1115; --fg: #e6e6e6; --muted: #8a8f99; --panel: #161a22;
+    --accent: #66c2a5; --danger: #fc8d62; --warn: #ffd166;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
+  header { padding: 16px 24px; background: var(--panel); border-bottom: 1px solid #2a2f3a; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 18px; }
+  header .badge { background: #2a2f3a; color: var(--muted); padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+  header .grow { flex: 1; }
+  header select, header button { background: var(--panel); color: var(--fg); border: 1px solid #2a2f3a; padding: 6px 10px; border-radius: 4px; font-size: 13px; }
+  nav { background: var(--panel); padding: 0 24px; display: flex; gap: 8px; border-bottom: 1px solid #2a2f3a; }
+  nav button { background: transparent; color: var(--muted); border: 0; padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-size: 14px; }
+  nav button.active { color: var(--fg); border-bottom-color: var(--accent); }
+  main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: var(--panel); padding: 14px; border-radius: 8px; border: 1px solid #2a2f3a; }
+  .kpi .label { color: var(--muted); font-size: 12px; }
+  .kpi .value { font-size: 24px; margin-top: 6px; }
+  .chart { background: var(--panel); border-radius: 8px; border: 1px solid #2a2f3a; padding: 12px; margin-bottom: 16px; }
+  .chart h2 { margin: 0 0 8px 8px; font-size: 14px; color: var(--muted); font-weight: 500; }
+  #app .pane { display: none; }
+  #app .pane.active { display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2a2f3a; }
+  th { color: var(--muted); font-weight: 500; }
+  tr.fail td:first-child::before { content: "●"; color: var(--danger); margin-right: 6px; }
+  tr.ok td:first-child::before { content: "●"; color: var(--accent); margin-right: 6px; }
+  .pill { padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+  .pill.error { background: rgba(252,141,98,0.2); color: var(--danger); }
+  .pill.ok { background: rgba(102,194,165,0.2); color: var(--accent); }
+  .span-row { display: grid; grid-template-columns: 220px 1fr 80px; align-items: center; gap: 12px; padding: 6px 0; font-size: 13px; }
+  .span-row .name { color: var(--fg); }
+  .span-row .name.indent { padding-left: 16px; color: var(--muted); }
+  .span-row .bar { height: 8px; background: var(--accent); border-radius: 4px; }
+  .span-row .bar.error { background: var(--danger); }
+  footer { padding: 16px 24px; color: var(--muted); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Workshop Observability · Local</h1>
+  <span class="badge" id="meta-agent">agent=?</span>
+  <span class="badge" id="meta-window">window=? min</span>
+  <span class="grow"></span>
+  <label for="data-select" style="color: var(--muted); font-size: 13px;">数据源:</label>
+  <select id="data-select">
+    <option value="data/traces.sample.json">traces.sample.json（样本）</option>
+    <option value="data/my-traces.json">my-traces.json（fetch-traces.ps1 拉的）</option>
+  </select>
+  <button id="reload-btn">刷新</button>
+</header>
+
+<nav>
+  <button class="tab active" data-pane="overview">Overview</button>
+  <button class="tab" data-pane="failures">Failures</button>
+  <button class="tab" data-pane="conversation">Conversation</button>
+</nav>
+
+<main id="app">
+
+  <section class="pane active" data-pane="overview">
+    <div class="kpis" id="kpi-cards"></div>
+    <div class="chart"><h2>QPS / p95 / failure rate(过去 ~1h,5min 桶)</h2><div id="qps-chart" style="height: 320px;"></div></div>
+  </section>
+
+  <section class="pane" data-pane="failures">
+    <div class="chart"><h2>失败聚类(按 error_type × operation × tool_name)</h2><div id="failures-chart" style="height: 280px;"></div></div>
+    <div class="chart"><h2>聚类表</h2><table id="failures-table"></table></div>
+  </section>
+
+  <section class="pane" data-pane="conversation">
+    <div class="chart">
+      <h2>选一条 conversation</h2>
+      <table id="conv-list"></table>
+    </div>
+    <div class="chart" id="conv-detail-panel" style="display:none">
+      <h2>Span 时间线 — <span id="conv-id"></span></h2>
+      <div id="span-list"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>workshop · 本地 observability · 单文件 HTML，数据来自 Foundry agents data-plane API（<code>fetch-traces.ps1</code>），不依赖 portal / App Insights。</footer>
+
+<script>
+let currentData = null;
+let qpsChart, failuresChart;
+
+async function loadData(path) {
+  try {
+    const r = await fetch(path);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    currentData = await r.json();
+    renderAll();
+  } catch (e) {
+    alert("加载失败: " + e.message + "\n\n如果你还没导出自己的 trace,请选 'traces.sample.json'。");
+  }
+}
+
+function renderAll() {
+  if (!currentData) return;
+  document.getElementById("meta-agent").textContent = "agent=" + currentData.agent_name;
+  document.getElementById("meta-window").textContent = "window=" + currentData.time_window_minutes + " min";
+  renderKPI();
+  renderQPSChart();
+  renderFailures();
+  renderConversations();
+}
+
+function renderKPI() {
+  const k = currentData.kpi;
+  const cards = [
+    { label: "QPS",          value: k.qps.toFixed(3) },
+    { label: "p50 (ms)",     value: k.p50_ms },
+    { label: "p95 (ms)",     value: k.p95_ms },
+    { label: "p99 (ms)",     value: k.p99_ms },
+    { label: "Failure rate", value: (k.failure_rate * 100).toFixed(1) + "%" },
+    { label: "Tokens in",    value: k.input_tokens.toLocaleString() },
+    { label: "Tokens out",   value: k.output_tokens.toLocaleString() }
+  ];
+  document.getElementById("kpi-cards").innerHTML = cards.map(c =>
+    `<div class="kpi"><div class="label">${c.label}</div><div class="value">${c.value}</div></div>`
+  ).join("");
+}
+
+function renderQPSChart() {
+  if (!qpsChart) qpsChart = echarts.init(document.getElementById("qps-chart"), "dark");
+  const ts = currentData.qps_timeseries || [];
+  qpsChart.setOption({
+    backgroundColor: "transparent",
+    tooltip: { trigger: "axis" },
+    legend: { textStyle: { color: "#e6e6e6" }, top: 0 },
+    grid: { left: 60, right: 60, top: 30, bottom: 30 },
+    xAxis: { type: "time" },
+    yAxis: [
+      { type: "value", name: "QPS / fail%", min: 0 },
+      { type: "value", name: "p95 (ms)", min: 0 }
+    ],
+    series: [
+      { name: "QPS",          type: "line", yAxisIndex: 0, data: ts.map(p => [p.t, p.qps]),                color: "#66c2a5" },
+      { name: "Failure rate", type: "line", yAxisIndex: 0, data: ts.map(p => [p.t, p.failure_rate * 100]), color: "#fc8d62" },
+      { name: "p95 (ms)",     type: "line", yAxisIndex: 1, data: ts.map(p => [p.t, p.p95_ms]),             color: "#ffd166" }
+    ]
+  });
+}
+
+function renderFailures() {
+  const clusters = currentData.failure_clusters || [];
+  if (!failuresChart) failuresChart = echarts.init(document.getElementById("failures-chart"), "dark");
+  failuresChart.setOption({
+    backgroundColor: "transparent",
+    tooltip: {},
+    grid: { left: 200, right: 40, top: 10, bottom: 30 },
+    xAxis: { type: "value" },
+    yAxis: { type: "category", data: clusters.map(c => `${c.error_type}/${c.operation}${c.tool_name ? "/" + c.tool_name : ""}`) },
+    series: [{ type: "bar", data: clusters.map(c => c.count), itemStyle: { color: "#fc8d62" } }]
+  });
+
+  document.getElementById("failures-table").innerHTML = `
+    <thead><tr><th>Error type</th><th>Operation</th><th>Tool</th><th>Count</th><th>Sample conversation</th></tr></thead>
+    <tbody>${clusters.map(c => `
+      <tr class="fail">
+        <td>${c.error_type}</td>
+        <td>${c.operation}</td>
+        <td>${c.tool_name || "—"}</td>
+        <td>${c.count}</td>
+        <td><a href="#" data-conv="${c.sample_conversation_id}">${c.sample_conversation_id}</a></td>
+      </tr>`).join("")}</tbody>`;
+}
+
+function renderConversations() {
+  const list = currentData.conversations || [];
+  document.getElementById("conv-list").innerHTML = `
+    <thead><tr><th>Conversation</th><th>Started</th><th>Spans</th><th>Status</th></tr></thead>
+    <tbody>${list.map(c => `
+      <tr class="${c.success ? "ok" : "fail"}">
+        <td><a href="#" data-conv="${c.conversation_id}">${c.conversation_id}</a></td>
+        <td>${c.started_at}</td>
+        <td>${c.spans.length}</td>
+        <td><span class="pill ${c.success ? "ok" : "error"}">${c.success ? "OK" : "FAIL"}</span></td>
+      </tr>`).join("")}</tbody>`;
+}
+
+function renderConversationDetail(conversationId) {
+  const c = (currentData.conversations || []).find(x => x.conversation_id === conversationId);
+  if (!c) return;
+  const max = Math.max(...c.spans.map(s => s.start + s.duration_ms));
+  const rows = c.spans.map(s => {
+    const widthPct = Math.max(0.5, (s.duration_ms / max) * 100);
+    const offsetPct = (s.start / max) * 100;
+    const indent = s.type === "request" ? "" : "indent";
+    return `
+      <div class="span-row">
+        <div class="name ${indent}">${s.name}</div>
+        <div style="position: relative; height: 8px;">
+          <div class="bar ${s.success ? "" : "error"}" style="position: absolute; left: ${offsetPct}%; width: ${widthPct}%;"></div>
+        </div>
+        <div style="color: var(--muted); text-align: right;">${s.duration_ms}ms</div>
+      </div>`;
+  }).join("");
+  document.getElementById("conv-id").textContent = conversationId;
+  document.getElementById("span-list").innerHTML = rows;
+  document.getElementById("conv-detail-panel").style.display = "block";
+}
+
+// ---- nav + events
+document.querySelectorAll("nav .tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("nav .tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".pane").forEach(p => p.classList.remove("active"));
+    document.querySelector(`.pane[data-pane="${btn.dataset.pane}"]`).classList.add("active");
+    if (qpsChart) qpsChart.resize();
+    if (failuresChart) failuresChart.resize();
+  });
+});
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-conv]");
+  if (a) {
+    e.preventDefault();
+    // switch to conversation tab
+    document.querySelector('nav .tab[data-pane="conversation"]').click();
+    renderConversationDetail(a.dataset.conv);
+  }
+});
+document.getElementById("reload-btn").addEventListener("click", () => {
+  loadData(document.getElementById("data-select").value);
+});
+document.getElementById("data-select").addEventListener("change", (e) => {
+  loadData(e.target.value);
+});
+window.addEventListener("resize", () => {
+  if (qpsChart) qpsChart.resize();
+  if (failuresChart) failuresChart.resize();
+});
+
+// ---- bootstrap
+loadData("data/traces.sample.json");
+</script>
+
+</body>
+</html>

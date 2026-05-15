@@ -47,3 +47,5 @@ credentials/
 .cache/
 .tmp/
 tmp/
+
+backup/

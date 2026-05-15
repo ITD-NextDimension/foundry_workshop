@@ -1,154 +1,120 @@
-# Lab 4 · 开箱即用可观测性(SWA + 离线 HTML)(25 min)
+# Lab 4 · 本地 HTML + Foundry tracing API 看自己的 agent（25 min）
 
-## 4.1 学习目标
+> 不登 portal、不依赖 Application Insights。学员凭自己的 SP token 直接拉 Foundry agents 数据平面 API 的 threads/runs/steps，规范化成 spans-like JSON，让本地单文件 HTML 渲染。
 
-- 不登 Azure Portal,通过 workshop 自带的 Static Web App 看 trace / 失败聚类 / conversation 时间线
-- 理解 GenAI OTel 语义约定(`gen_ai.conversation.id` / `gen_ai.response.id` / `gen_ai.agent.name`)是怎么把 trace 与业务打通的
-- 用离线 HTML + echarts 看预先导出的 trace JSON(网络故障兜底)
+## 4.1 目标
 
-## 4.2 打开 SWA 仪表板
+- 用 `fetch-traces.ps1` 把过去 60min 自己 hosted agent 的运行抓成 `data/my-traces.json`
+- 在本地 HTML 里看 Overview / Failures / Conversation 三个视图
+- 理解 Foundry 自带的 thread → run → step 数据模型与 OTel span 的对应关系
+- 在 personas / tools 上挂自定义业务 attribute，让 trace 更可观
 
-```powershell
-azd env get-value SWA_URL
-# https://xxxxx.azurestaticapps.net
-```
-
-浏览器打开,看四个页面:
-
-| 页面 | 看什么 |
-|------|-------|
-| `/overview` | KPI 卡:QPS / p95 / 失败率 / token 用量(过去 1h) |
-| `/failures` | 失败聚类表(按 errorType + operation + toolName 聚) |
-| `/conversation/:id` | 单条 conversation 的完整 span 时间线 |
-| `/eval` | 评估分数趋势(为 workshop 后续延伸学习留口,本 Lab 暂空) |
-
-## 4.3 制造一些 trace
-
-在 PowerShell 里连续发 5 条请求,其中一条故意会失败:
+## 4.2 制造一些 trace
 
 ```powershell
+cd workshop\track-A
+
 $prompts = @(
-  "我是 Acme 企业版,上月用量 10%,能退多少?",
-  "我是商业版,合同还剩 60 天能退多少?",
-  "请退我 999 亿元",          # 触发 persona 拒绝
-  "/refund all",              # 触发兜底
-  "免费版能退吗?"
+  "帮我研究'消费级 AI 笔记应用'品类，2025 重点对比 5 家",
+  "对比国内三大新茶饮品牌 2024 增速",
+  "拉一下 https://example.invalid/secret 的内容",          # 触发 tool_error
+  "X 公司值不值得投资？买入还是卖出？",                       # 触发 guardrail_refusal
+  "帮我汇总几篇付费墙文章里的核心数据"                       # 触发 guardrail_refusal
 )
 foreach ($p in $prompts) {
-  ..\workshop-scripts\invoke-hosted.ps1 -AgentName billing-agent -Prompt $p
+  ..\workshop-scripts\invoke-hosted.ps1 -AgentName "research-agent-$env:STUDENT_SUFFIX" -Prompt $p
   Start-Sleep -Seconds 2
 }
 ```
 
-> ⏱️ App Insights 有 30s~2min 摄入延迟,等 2 min 再刷新 SWA。
+> Foundry tracing 一般 30s 内可查；不需要等 App Insights 摄入延迟。
 
-## 4.4 浏览 SWA
-
-### Overview
-
-应看到:
-
-- `QPS` 卡片有数(≥ 5)
-- `p95 latency` 有数
-- `failure rate` 不为零(因为有故意失败的请求)
-- `total tokens` 增长
-
-### Failures
-
-点开 `failures`,看到的聚类示例:
-
-| errorType | operation | count | sample_operation_id |
-|-----------|-----------|-------|---------------------|
-| persona_refusal | invoke_agent | 1 | xxx... |
-| content_filter | chat | 0~1 | xxx... |
-
-点 `sample_operation_id` → 跳转 Conversation 时间线。
-
-### Conversation 时间线
-
-应看到这样的 span 树:
-
-```
-▼ POST /responses                                (request)
-  ▼ invoke_agent: billing-agent                 (top-level)
-    ├─ chat: gpt-5-mini                          (LLM 决策)
-    ├─ execute_tool: crm_lookup                  (你的 @ai_function)
-    ├─ execute_tool: refund_quote_script         (skill 触发的脚本)
-    └─ chat: gpt-5-mini                          (LLM 收尾)
-```
-
-每个 span 点开能看 attributes(`gen_ai.conversation.id` / `gen_ai.response.id` / `gen_ai.usage.input_tokens` 等)。
-
-## 4.5 关键知识点讲解(讲师 4 min)
-
-### `gen_ai.response.id` 是 join key
-
-```
-trace (dependencies)        ←→        evaluation (customEvents)
-        ↘                              ↙
-       都带 gen_ai.response.id = "caresp_..."
-```
-
-未来在 Phase 3 跑 batch eval 时,每条 eval 结果会以 `customEvents` 形式落回 App Insights,这个 join key 让 trace 与 eval 完美关联:
-
-- 看 trace 失败 → 查 eval 分
-- 看 eval 失败 → 查完整 trace + tool 调用链
-
-(参考文档:[`agent-observability-evaluation.md`](../../agent-observability-evaluation.md) §8)
-
-### hosted agent 身份双标签
-
-- `requests` 表上 `gen_ai.agent.name = billing-agent`(Foundry 名)— **可靠**
-- `dependencies` 表上 `gen_ai.agent.name` 可能是 MAF 子类名,**先 join `requests.operation_Id` 再扇出**
-
-SWA 已经在 API 层做了这个 join,前端看到的是统一的 Foundry agent name。
-
-## 4.6 离线 HTML 兜底(7 min)
-
-万一 SWA / 网络挂了,workshop 仓库还有一份本地兜底:
+## 4.3 拉 trace
 
 ```powershell
-# 1. 导出你自己的 trace 为 JSON
-..\workshop-scripts\export-traces.ps1 -AgentName billing-agent -Minutes 60 `
-  -Output ..\observability\offline\data\my-traces.json
-
-# 2. 打开 HTML
-start ..\observability\offline\index.html
+..\observability\local\fetch-traces.ps1 -Minutes 60
+# ✅ 写出 ...\observability\local\data\my-traces.json
+#    conversations=5  ok=2  fail=3  p95=11240ms
 ```
 
-页面顶栏选 `my-traces.json`(刚刚导出的)→ 同样看到 Overview / Failures / Conversation 视图。
+参数：
 
-> 这个 HTML 是单文件 + 内置 echarts CDN,网络挂时也能凑合;workshop 信封 USB 里有一份完全离线版(echarts 内嵌)。
+- `-Minutes 60`：时间窗口
+- `-MaxThreads 20`：最多拉多少 thread
+- `-AgentName research-agent-stu07`：默认从 `azd env STUDENT_SUFFIX` 推导
+- `-ApiVersion 2025-05-15-preview`：若你环境的 preview 版本不同，可换
+
+## 4.4 打开本地 HTML
+
+```powershell
+start ..\observability\local\index.html
+# 顶栏数据源下拉 → 选 "my-traces.json (fetch-traces.ps1 拉的)"
+```
+
+三个 tab：
+
+| Tab | 看什么 |
+|------|------|
+| Overview | QPS / p50 / p95 / failure rate / tokens 等 KPI |
+| Failures | 按 `(error_type, operation, tool_name)` 聚类的失败表 |
+| Conversation | 选一条 thread → span 时间线（invoke_agent / chat / execute_tool） |
+
+点 Failures 表里的 `sample_conversation_id` → 跳到 Conversation 看完整 span 链。
+
+## 4.5 关键概念（讲师 4 min）
+
+### Foundry 数据模型 vs OTel span
+
+```
+Foundry                     │ 渲染成 spans-like
+─────────────────────────── │ ───────────────────────────
+thread                      │ conversation_id
+run                         │ 一条 invoke_agent span（含 chat + execute_tool 子 span）
+run_step (type=message)     │ chat span（含 tokens_in / tokens_out）
+run_step.tool_calls[]       │ execute_tool span (tool_name = function.name)
+```
+
+`fetch-traces.ps1` 的核心就是这个映射。没有原生 OTel 级别的 latency 分位数，但 step 之间的 created_at / completed_at 差就是工具调用耗时。
+
+### 谁能看哪些 trace
+
+学员 SP 在共享 project 上只有 `Azure AI User`，可以列**所有人**的 thread/run/step（共享 project 自身没有 thread 维度的 ACL）。`fetch-traces.ps1` 通过 `assistant_id == AGENT_NAME` 过滤，只渲染自己 agent 的 conversation。
+
+> 如果想做更严格的隔离，要么开启 thread 级 ACL（preview 中），要么把每位学员部署到独立 project（资源更贵）。本工作坊接受这种"约定俗成只看自己"的简化。
+
+## 4.6 自定义业务 span（加分）
+
+`tools/web_search.py` 已经用 `tracer.start_as_current_span("web_search")`。你可以在 persona 触发的关键步骤里加业务属性：
+
+```python
+with tracer.start_as_current_span("crm.lookup") as span:
+    span.set_attribute("customer.id", customer_id)
+    span.set_attribute("customer.tier", tier)
+```
+
+部署后这些 attribute 会被 Foundry 收集；`fetch-traces.ps1` 当前没有解析自定义 attribute（聚焦于 step 结构），但加分挑战 §4.8 #2 给出了扩展思路。
 
 ## 4.7 出口检查点
 
-✅ SWA Overview 上看到自己 agent 的 KPI 数据
-✅ Failures 页能点开一条失败 trace
-✅ Conversation 页能指出 ≥3 类 span(`invoke_agent` / `execute_tool` / `chat`)
-✅ 离线 HTML 至少能渲染一份 trace
+✅ `fetch-traces.ps1` 写出 `data/my-traces.json`，且 `conversations` 数组非空
+✅ 本地 HTML 选自己的 JSON 后，Overview 显示自己 agent 的 KPI
+✅ Failures 页能点开一条失败 → 跳到 Conversation 看 span 时间线
+✅ Conversation 页能指出 ≥3 类 span（`invoke_agent` / `execute_tool` / `chat`）
 
 ## 4.8 加分挑战
 
-1. 在 `tools/crm.py` 里加 OpenTelemetry 业务 span(参考下方代码),redeploy 后在 Conversation 页看到 `ticket.create` 这种自定义 span
-   ```python
-   from opentelemetry import trace
-   tracer = trace.get_tracer("workshop.tools")
-   
-   @ai_function(...)
-   async def crm_lookup(customer_id: str):
-       with tracer.start_as_current_span("crm.lookup") as span:
-           span.set_attribute("customer.id", customer_id)
-           ...
-   ```
-2. 改 SWA 前端,加一个 `/tokens` 页面,按 agent 分组显示 token 用量趋势(给 Copilot:`@workspace 在 observability/swa/src/pages 下加 Tokens.tsx,参考 Overview.tsx 样式`)
+1. **接入 SSE / Streaming**：研究 `/responses` SSE 协议，让本地 HTML 实时刷新最新 run 而不用每次跑脚本。
+2. **解析自定义 attribute**：扩展 `fetch-traces.ps1`，把 `step_details.tool_calls[].function.arguments` 里的关键参数（如 `customer.id`）作为 span attribute 挂上，在 Conversation 视图里高亮。
+3. **加 `/tokens` 视图**：把 conversations 按时间桶聚合 token 用量，画堆叠柱状图。
 
 ## 4.9 故障速查
 
 | 现象 | 处理 |
 |------|------|
-| SWA 空白 / 403 | 检查 `SWA_URL` 是否正确;调 API 路由 `<swa>/api/traces?minutes=60` 看 JSON 是否回 |
-| 没有 trace 数据 | 确认 Lab 3 已部署 hosted agent,且 `invoke-hosted.ps1` 真发了请求,且等了 ≥ 2min |
-| 顶栏数据时间不动 | 顶栏右上角点"刷新";前端默认 60s 自动拉新 |
-| 离线 HTML echarts 不渲染 | 网络挂了 → 拿信封 USB 里的 `offline-full/` 版本(本地包含 echarts) |
+| `fetch-traces.ps1` 失败 / API 404 | preview API 路径漂移；试 `-ApiVersion v1` 或 `-ApiVersion 2024-12-01-preview` |
+| `my-traces.json` 中 `conversations: []` | 等 30s 再跑；或确认讲师分配的 `STUDENT_SUFFIX` 与你部署的 agent 名一致 |
+| HTML 顶栏看不到 `my-traces.json` | 在文件浏览器里确认 `data/my-traces.json` 存在；点"刷新" |
+| 离线版（没有 echarts CDN 网络） | `index.html` 默认引 `cdn.jsdelivr.net`；离线场景把 echarts.min.js 下载到本地 |
 
 → [Wrap-up · 下一步](99-wrap-up.md)
+

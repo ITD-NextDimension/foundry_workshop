@@ -1,179 +1,186 @@
-# Lab 2 · GitHub Copilot vibe coding 业务 agent harness(55 min)
+# Lab 2 · GitHub Copilot + MAF vibe coding 业务 agent（55 min）
 
-## 2.1 学习目标
+> Lab 1 部署的是 Foundry 给的 placeholder。本 Lab 用 `maf-agent` chatmode 在 track-A 工作目录里**本地**写一个真正的业务 agent（默认：市场/竞品研究助手），Lab 3 再把它推回 Lab 1 的 hosted slot。
 
-- 用 Copilot 在指令式提示下生成 **Persona(Soul)** + **Skill(Skills)** + **`@ai_function`(Tools)** 三件套
-- 理解 `personas/` / `skills/` / `tools/` 目录约定
-- 本地 `agentdev run` 起 agent + Agent Inspector 看 trace
+## 2.1 目标
 
-## 2.2 5 个 mini-milestone
+- 熟悉 **Soul（Persona） · Skills · Tools** 三件套约定
+- 用 Copilot 的 `/persona`、`/skill`、`/tool` 斜杠命令快速生成骨架
+- `agentdev run` 本地跑通 → POST 返回业务 JSON
+- 可选：把默认场景换成你自己的业务
 
-### M1 · Persona / Soul(10 min)
+## 2.2 默认场景：市场/竞品研究助手
 
-#### Track A 范例
+讲师默认场景，Lab 2 直接用。看 [`../track-A/personas/research-agent.md`](../track-A/personas/research-agent.md) 与 [`../track-A/skills/market-research/SKILL.md`](../track-A/skills/market-research/SKILL.md)。
 
-在 VS Code 里打开 `track-A/personas/shared/guardrails.md`,然后用 Copilot Chat:
+它的能力：
 
-```text
-@workspace 参考 #file:personas/shared/guardrails.md 与 #file:personas/billing-agent.md,
-生成 personas/refund-specialist.md,角色是"退款专员",边界:
-1. 只处理退款相关问题,其它转 TriageAgent
-2. Tier=Free 直接拒绝
-3. 输出 JSON: {decision, refundEstimate, policyVersion, escalateTo}
-frontmatter 含 version: 1.0.0, owner: refund-team@contoso.com, extends: shared/guardrails.md
+```
+输入：一个产品 / 品类 / 公司
+   │
+   ▼
+[ResearchAgent]
+   ├─ 拆解 3-7 个子问题（不调任何工具）
+   ├─ web_search   多关键词、多源
+   ├─ web_fetch    抓正文 + 去 HTML
+   ├─ report_builder  校验引用 + 输出结构化 JSON
+   ▼
+输出：带可点击脚注的 markdown 报告 + sources 数组 + confidence 评级
 ```
 
-#### Track B 范例(以"IT 工单"为例)
+## 2.3 三件套 mini-milestones
 
-```text
-@workspace 参考 #file:track-B-templates/it-ticket/persona.template.md,
-生成我自己的 IT 工单 agent persona:
-公司是一家 SaaS,有 product / network / account 三类工单;
-不能承诺 SLA,统一引导用户附截图;
-输出 JSON: {category, priority, suggestedAssignee}
-```
+### M1 · Persona / Soul（10 min）
 
-#### 出口检查点
+切到 `maf-agent` chatmode。两条路：
+
+**A. 默认场景** —— 已经写好，不用改。可以直接 lint：
 
 ```powershell
-# Persona lint(检查 frontmatter / include 语法)
-python ..\workshop-scripts\lint-persona.py personas\<your-agent>.md
+python ..\workshop-scripts\lint-persona.py personas\research-agent.md
+# ✅ persona research-agent OK · extends=[shared/guardrails.md] · version=1.0.0
 ```
 
-应输出:`✅ persona <name> OK · extends=[..] · version=1.0.0`
+**B. 自带业务** —— 用斜杠命令：
 
-### M2 · Skill / SkillsProvider(10 min)
-
-#### Track A 范例
-
-```text
-@workspace 在 skills/refund-quote/ 下生成 SKILL.md + scripts/quote.py:
-SKILL.md 4 步:1) 用 crm_lookup 读 tier;2) 调用 scripts/quote.py;
-3) 输出 maxRefund + policyVersion;4) 若 maxRefund < 请求,告知差额来源
-scripts/quote.py 接受 --tier --amount,返回 JSON {maxRefund, policyVersion, capped}
-策略:Enterprise 50% 上限 30 天;Business 25% 上限 14 天;Free 拒绝。
+```
+/persona agentName=invoice-explainer role="发票解读助手" boundaries="不查实时汇率；不给税务建议；必须从用户提供的发票文本里抽事实" tools="ocr_extract, classify_charges, currency_normalize" contract="{lineItems, totalsByCategory, suspiciousFlags}"
 ```
 
-#### 验证
+Copilot 会按 `.github/instructions/maf-personas.instructions.md` 的约定生成 `personas/invoice-explainer.md`。
 
-```powershell
-python track-A\skills\refund-quote\scripts\quote.py --tier Enterprise --amount 1000
-# {"maxRefund": 500, "policyVersion": "v3.2", "capped": true}
+### M2 · Skill（10 min）
+
+```
+/skill skillName=invoice-explain purpose="一步步解读上传的发票"
+triggers="用户上传图片或文本发票；用户问'每笔花在哪'"
+tools="ocr_extract, classify_charges, currency_normalize"
+relatedSkills="citation-format"
 ```
 
-### M3 · Client-side Tools(10 min)
+或者直接读 `skills/market-research/SKILL.md` 找灵感。
 
-#### Track A 范例
+### M3 · Client-side Tools（15 min）
 
-```text
-@workspace 在 tools/crm.py 写 @ai_function crm_lookup,签名:
-async def crm_lookup(customer_id: str) -> CrmLookupResult
-result 含 tier(Enterprise/Business/Free)/ contractEnd / arr。
-先用本地 dict mock,真正的 HTTPX 调用留 TODO。
-描述写中文,模型才知道何时调用。
+```
+/tool toolName=ocr_extract purpose="从图片或 PDF 抽文本"
+inputs="image_url: HttpUrl, lang: str='auto'"
+outputs="text: str, blocks: list[dict], pages: int"
+liveBackend="Azure Computer Vision Read API (env: AZURE_VISION_KEY/AZURE_VISION_ENDPOINT)"
+envKey="AZURE_VISION_KEY"
 ```
 
-#### 验证
+`maf-tools.instructions.md` 会强制 pydantic + OTel + mock fallback。
 
-```powershell
-pytest track-A\tests\unit\test_tools.py -v
-```
+### M4 · 组装 + 本地跑通（15 min）
 
-### M4 · 组装 + 本地跑通(15 min)
+默认场景：`src/research_agent/main.py` 已写好。
 
-#### 让 Copilot 帮你装配
-
-`src/billing_agent/main.py`(workshop 已有骨架,你可以改名 + 加你的 tools):
+自带业务：
 
 ```python
+# src/my_agent/main.py
 from agent_framework import Agent, SkillsProvider
-from agent_framework.openai import FoundryChatClient
-from azure_ai_agentserver_agentframework import ResponsesHostServer
-from pathlib import Path
-import os
-
-from tools.crm import crm_lookup
-from tools.ticketing import create_ticket
+from src.shared.client_factory import build_chat_client
 from src.shared.persona import load_persona
+from src.shared.skill_runner import run_local_skill_script
+from pathlib import Path
+import sys, os
+
+_REPO = Path(__file__).resolve().parents[2]
+if str(_REPO) not in sys.path:
+    sys.path.insert(0, str(_REPO))
+
+from tools.ocr_extract import ocr_extract
+# ... 其它你新写的 tools
 
 skills_provider = SkillsProvider.from_paths(
-    skill_paths=[Path(__file__).resolve().parents[2] / "skills"],
+    skill_paths=[_REPO / "skills"],
+    script_runner=run_local_skill_script,
 )
 
 agent = Agent(
-    client=FoundryChatClient(
-        endpoint=os.environ["AZURE_AI_PROJECT_ENDPOINT"],
-        deployment_name=os.environ["FOUNDRY_MODEL_DEPLOYMENT_NAME"],
-    ),
-    instructions=load_persona("billing-agent.md"),
+    name=os.environ.get("AGENT_NAME", "invoice-explainer"),
+    client=build_chat_client(),
+    instructions=load_persona("invoice-explainer.md"),
     context_providers=[skills_provider],
-    tools=[crm_lookup, create_ticket],
+    tools=[ocr_extract, classify_charges, currency_normalize],
     default_options={"store": False},
 )
-
-if __name__ == "__main__":
-    ResponsesHostServer(agent).run(port=8087)
 ```
 
-#### 启动
+启动：
 
 ```powershell
-$env:AZURE_AI_PROJECT_ENDPOINT = azd env get-value AZURE_AI_PROJECT_ENDPOINT
-$env:FOUNDRY_MODEL_DEPLOYMENT_NAME = azd env get-value AZURE_AI_MODEL_DEPLOYMENT_NAME
+# 装依赖（只需一次）
 pip install -r requirements.txt
-agentdev run src/billing_agent/main.py --port 8087
+
+# 加载 .env（讲师下发的凭据已经填进去）
+Get-Content .env | Where-Object { $_ -match '^\w' } | ForEach-Object {
+  $k, $v = $_ -split '=', 2; [Environment]::SetEnvironmentVariable($k, $v, 'Process')
+}
+
+# 启动（默认 8087）
+agentdev run src\research_agent\main.py --port 8087
 ```
 
-第二个终端:
+第二个终端：
 
 ```powershell
-$body = @{ input = "我是 Acme 企业版客户,上月用量 10%,能退多少?" } | ConvertTo-Json
+$body = @{ input = "帮我研究'消费级 AI 笔记应用'品类，2025 重点对比 5 家" } | ConvertTo-Json
 Invoke-RestMethod -Method POST -Uri "http://localhost:8087/responses" -ContentType "application/json" -Body $body
 ```
 
-应看到 JSON 含 `refundEstimate` 字段。
+应返回符合 `research-agent.md` 输出契约的 JSON（含 `report` + `sources` + `confidence`）。
 
-### M5 · Agent Inspector + 失败案例修正(10 min)
+### M5 · Agent Inspector + 用 Copilot 反思 trace（5 min）
 
 ```powershell
 agentdev inspect
 ```
 
-浏览器自动开 Agent Inspector UI。
+浏览器自动开。发一条**违反 guardrail 的 prompt**：
 
-#### 故意"激怒"agent
+```
+"X 公司值不值得投资？买入还是卖出？"
+```
 
-发一条:`"我是免费版,要退 1 亿"`,看 persona 拒绝行为。
-然后改 `personas/billing-agent.md` 加强一条 "对 Free tier 不讨价还价,直接转 TriageAgent",本地复现。
+预期：persona 拒答（参考 `personas/shared/guardrails.md` 的"不做投资建议"规则）。Inspector 看到 chat span，返回 `{refused: true, ...}`。
 
-#### 用 Copilot 反查 trace 含义
+选中 Inspector 里 `execute_tool: web_search` 那行，截图给 Copilot Chat：
 
-选中 Inspector 里 `execute_tool` 那行 → 截图 → `Ctrl+I` 给 Copilot:`explain why this tool was called`.
+```
+explain this span tree and why no web_fetch followed the search
+```
 
-## 2.3 Copilot 使用心法
+## 2.4 Copilot 使用心法
 
-| 任务类型 | 最佳工具 | 模板 |
-|---------|---------|------|
-| 生成 markdown | Copilot Chat + `#file:` 引用现有文件 | `@workspace 参考 #file:X 生成 Y,要求 ...` |
-| 写 Python tool | Inline `Ctrl+I` 在空函数里展开 | "写 @ai_function...，参数...，pydantic 返回...，描述用中文" |
-| 重构加超时/日志 | 选中 → `Ctrl+I` | "add 30s timeout and structured logging via opentelemetry" |
-| 解释 trace span | Copilot Chat + 截图 | "explain this span tree and find the slowest step" |
+| 任务 | 最佳方式 |
+|------|---------|
+| 生成新 persona | `/persona` 斜杠（自动按 instructions 约束 frontmatter） |
+| 生成新 SKILL.md | `/skill` 斜杠 |
+| 生成新 @ai_function | `/tool` 斜杠（pydantic + OTel + mock 已模板化） |
+| 解释 trace span | 截图 → Copilot Chat → `explain this span tree` |
+| 重构加超时/日志 | 选中代码 → Ctrl+I → `add 30s timeout and OTel span` |
 
 详见 [`cheatsheet-copilot.md`](cheatsheet-copilot.md)。
 
-## 2.4 出口检查点
+## 2.5 出口检查点
 
-✅ `personas/<agent>.md` + `skills/<skill>/SKILL.md` + `tools/<tool>.py` 三件齐全且 lint 通过
-✅ `agentdev run` 启动无错,本地 POST 返回业务 JSON
-✅ Agent Inspector 看到完整 conversation(invoke_agent / execute_tool / chat 三类 span)
+✅ 三件套齐全：`personas/<agent>.md` + `skills/<skill>/SKILL.md` + `tools/<tool>.py`
+✅ `lint-persona.py` 通过
+✅ `agentdev run` 启动无错，本地 POST 返回业务 JSON
+✅ Agent Inspector 看到 invoke_agent → execute_tool* → chat 序列
 
-## 2.5 故障速查
+## 2.6 故障速查
 
 | 现象 | 处理 |
 |------|------|
-| `FoundryChatClient` 401 | `az account get-access-token --resource https://ai.azure.com` 确认能拿 token;不行就 `azd auth login` 重登 |
+| `FoundryChatClient` 401 | `az account get-access-token --resource https://ai.azure.com` 不行就 `azd auth login` 重登 |
 | `agentdev run` 端口冲突 | `--port 8088` / `--port 8089` |
-| Copilot 生成的 persona 与 SKILL 矛盾 | "diff 给我两段,reconcile 后输出最终版本" |
-| 模型一直说"不知道工具",不调 `@ai_function` | 检查 `@ai_function(description=...)` 中文描述够不够具体,模型按描述选工具 |
+| Copilot 没按 instructions 走（例如生成 dict 而不是 pydantic） | 在 Chat 开头加上 `Use #file:.github/instructions/maf-tools.instructions.md` |
+| 模型一直说"不知道工具"，不调 `@ai_function` | 检查 `@ai_function(description=...)` 中文描述够不够具体 |
+| Skill 文件没被加载 | 检查 `SkillsProvider.from_paths(skill_paths=[...])` 路径；SKILL.md 必须在子目录中 |
 
-→ [Lab 3 · 部署到 Foundry Hosted Agent](lab-3-deploy.md)
+→ [Lab 3 · 把本地 agent 推到 hosted](lab-3-update-hosted-agent.md)
+

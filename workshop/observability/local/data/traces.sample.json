@@ -1,0 +1,93 @@
+{
+  "agent_name": "research-agent",
+  "generated_at": "2026-05-14T10:30:00Z",
+  "time_window_minutes": 60,
+  "kpi": {
+    "qps": 0.058,
+    "p50_ms": 4120,
+    "p95_ms": 12450,
+    "p99_ms": 18230,
+    "failure_rate": 0.10,
+    "total_tokens": 32480,
+    "input_tokens": 24210,
+    "output_tokens": 8270
+  },
+  "conversations": [
+    {
+      "conversation_id": "thread_ok_001",
+      "started_at": "2026-05-14T10:05:12Z",
+      "agent_name": "research-agent",
+      "success": true,
+      "user_input": "帮我研究'消费级 AI 笔记应用'品类，2025 重点对比 5 家",
+      "spans": [
+        {"name": "POST /responses", "type": "request", "start": 0, "duration_ms": 9840, "success": true},
+        {"name": "invoke_agent: research-agent", "type": "invoke_agent", "start": 5, "duration_ms": 9820, "success": true},
+        {"name": "chat: gpt-5-mini (plan)", "type": "chat", "start": 30, "duration_ms": 720, "success": true, "tokens_in": 820, "tokens_out": 180},
+        {"name": "execute_tool: web_search", "type": "execute_tool", "start": 760, "duration_ms": 920, "success": true, "tool_name": "web_search"},
+        {"name": "execute_tool: web_fetch", "type": "execute_tool", "start": 1700, "duration_ms": 1340, "success": true, "tool_name": "web_fetch"},
+        {"name": "execute_tool: web_fetch", "type": "execute_tool", "start": 3050, "duration_ms": 1120, "success": true, "tool_name": "web_fetch"},
+        {"name": "execute_tool: web_search", "type": "execute_tool", "start": 4200, "duration_ms": 860, "success": true, "tool_name": "web_search"},
+        {"name": "execute_tool: web_fetch", "type": "execute_tool", "start": 5080, "duration_ms": 1280, "success": true, "tool_name": "web_fetch"},
+        {"name": "execute_tool: report_builder", "type": "execute_tool", "start": 6380, "duration_ms": 240, "success": true, "tool_name": "report_builder"},
+        {"name": "chat: gpt-5-mini (finalize)", "type": "chat", "start": 6650, "duration_ms": 2920, "success": true, "tokens_in": 4180, "tokens_out": 1820}
+      ]
+    },
+    {
+      "conversation_id": "thread_ok_002",
+      "started_at": "2026-05-14T10:18:34Z",
+      "agent_name": "research-agent",
+      "success": true,
+      "user_input": "对比国内三大新茶饮品牌 2024 增速",
+      "spans": [
+        {"name": "POST /responses", "type": "request", "start": 0, "duration_ms": 4310, "success": true},
+        {"name": "invoke_agent: research-agent", "type": "invoke_agent", "start": 5, "duration_ms": 4290, "success": true},
+        {"name": "chat: gpt-5-mini (plan)", "type": "chat", "start": 20, "duration_ms": 420, "success": true, "tokens_in": 540, "tokens_out": 120},
+        {"name": "execute_tool: web_search", "type": "execute_tool", "start": 460, "duration_ms": 880, "success": true, "tool_name": "web_search"},
+        {"name": "execute_tool: web_fetch", "type": "execute_tool", "start": 1360, "duration_ms": 980, "success": true, "tool_name": "web_fetch"},
+        {"name": "execute_tool: report_builder", "type": "execute_tool", "start": 2360, "duration_ms": 200, "success": true, "tool_name": "report_builder"},
+        {"name": "chat: gpt-5-mini (finalize)", "type": "chat", "start": 2580, "duration_ms": 1700, "success": true, "tokens_in": 2110, "tokens_out": 980}
+      ]
+    },
+    {
+      "conversation_id": "thread_refusal_003",
+      "started_at": "2026-05-14T10:22:50Z",
+      "agent_name": "research-agent",
+      "success": true,
+      "user_input": "X 公司值不值得投资？买入还是卖出？",
+      "spans": [
+        {"name": "POST /responses", "type": "request", "start": 0, "duration_ms": 980, "success": true},
+        {"name": "invoke_agent: research-agent", "type": "invoke_agent", "start": 5, "duration_ms": 970, "success": true, "outcome": "guardrail_refusal"},
+        {"name": "chat: gpt-5-mini (refuse)", "type": "chat", "start": 20, "duration_ms": 940, "success": true, "tokens_in": 380, "tokens_out": 60, "refused": true}
+      ]
+    },
+    {
+      "conversation_id": "thread_fail_004",
+      "started_at": "2026-05-14T10:25:30Z",
+      "agent_name": "research-agent",
+      "success": false,
+      "user_input": "拉一下 https://example.invalid/secret 的内容",
+      "spans": [
+        {"name": "POST /responses", "type": "request", "start": 0, "duration_ms": 11240, "success": false, "error_type": "tool_error"},
+        {"name": "invoke_agent: research-agent", "type": "invoke_agent", "start": 5, "duration_ms": 11220, "success": false},
+        {"name": "chat: gpt-5-mini", "type": "chat", "start": 20, "duration_ms": 320, "success": true, "tokens_in": 420, "tokens_out": 80},
+        {"name": "execute_tool: web_fetch", "type": "execute_tool", "start": 360, "duration_ms": 10800, "success": false, "tool_name": "web_fetch", "error_type": "tool_error", "error_message": "ConnectError: name resolution failed"}
+      ]
+    },
+    {
+      "conversation_id": "thread_fail_005",
+      "started_at": "2026-05-14T10:28:11Z",
+      "agent_name": "research-agent",
+      "success": false,
+      "user_input": "帮我汇总几篇付费墙文章里的核心数据",
+      "spans": [
+        {"name": "POST /responses", "type": "request", "start": 0, "duration_ms": 2120, "success": false, "error_type": "guardrail_refusal"},
+        {"name": "invoke_agent: research-agent", "type": "invoke_agent", "start": 5, "duration_ms": 2110, "success": false, "error_type": "guardrail_refusal"},
+        {"name": "chat: gpt-5-mini", "type": "chat", "start": 20, "duration_ms": 1980, "success": true, "tokens_in": 510, "tokens_out": 140, "refused": true}
+      ]
+    }
+  ],
+  "failure_clusters": [
+    {"error_type": "tool_error", "operation": "execute_tool", "tool_name": "web_fetch", "count": 1, "sample_conversation_id": "thread_fail_004"},
+    {"error_type": "guardrail_refusal", "operation": "invoke_agent", "tool_name": null, "count": 1, "sample_conversation_id": "thread_fail_005"}
+  ]
+}
