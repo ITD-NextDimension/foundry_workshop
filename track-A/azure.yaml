@@ -1,20 +1,22 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
-# Workshop edit (重构后): 不再创建任何 Azure 资源；学员仅部署自己的 hosted agent
-# 到讲师下发的共享 Foundry project（讲师在另一仓库中预部署）。
+# 工作坊设计: 学员不 provision 任何 Azure 资源, 共享 Foundry account / project /
+# 模型 deployment / ACR 由讲师在配套仓库中预部署。学员在这里只做一件事:
+# 通过 `azd deploy <agent>` 把自己后缀的 hosted agent 推到共享 project。
 #
-# - infra:        留空 / 不存在 (workshop/track-A/infra 已删除)
-# - services:    单一 research-agent (host=azure.ai.agent)
-# - resources:    占位 (azd 0.10+ 允许，此处仅作 declarative reference)
+# 因此本文件:
+# - 没有 infra: 块                (学员 SP 无 RG provision 权限)
+# - services 只有 research-agent  (host=azure.ai.agent, ACR remote build)
+# - config.deployments[] 故意为空 (共享 deployment 由预部署创建, 通过 azd env 引用)
 #
-# 模型 deployment、ACR、capability host 都在讲师的预部署仓库里建好，
-# 通过 azd env 把 endpoint / 模型名 / ACR 名等灌进来即可。
+# 学员通过 azd env set 注入(从讲师下发的凭据复制):
+#   AZURE_AI_PROJECT_ENDPOINT       (讲师提供)
+#   AZURE_AI_MODEL_DEPLOYMENT_NAME  (讲师提供)
+#   STUDENT_SUFFIX / AGENT_NAME     (讲师分配)
+#   AZURE_CONTAINER_REGISTRY_NAME / ENDPOINT (讲师提供; ACR remote build)
 #
-# 学员通过 azd env set 注入（从讲师下发的凭据复制）：
-#   AZURE_AI_PROJECT_ENDPOINT      （讲师提供）
-#   AZURE_AI_MODEL_DEPLOYMENT_NAME （讲师提供）
-#   STUDENT_SUFFIX / AGENT_NAME    （讲师分配）
-#   AZURE_CONTAINER_REGISTRY_NAME / ENDPOINT（讲师提供；ACR remote build）
+# 如果误跑 `azd provision` / `azd up`, 会因为没有 infra 而失败 —— 这是预期行为。
+# 工作坊只用 `azd deploy`。
 
 requiredVersions:
   azd: '>= 1.21.3'
@@ -41,11 +43,7 @@ services:
         scale:
           minReplicas: 1
           maxReplicas: 3
-      # NOTE: deployments[] 故意空 — 共享 deployment 由预部署创建。
+      # deployments[] 故意为空 — 共享 deployment 由预部署创建。
       # azd ai agent init 通过 ${AZURE_AI_MODEL_DEPLOYMENT_NAME} 引用即可。
       deployments: []
       startupCommand: python -m src.research_agent.main
-
-# 不写 infra 块：azd 0.10+ 允许 hosted agent only deployment;
-# 若学员误跑 `azd provision`，会因没有 infra 而失败 (按设计 — 应只用 `azd deploy`)。
-
