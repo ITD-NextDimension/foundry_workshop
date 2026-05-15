@@ -1,0 +1,28 @@
+name: foundry-copilot-workshop-track-a
+metadata:
+  template: azd-ai-starter-basic-workshop@1.0.0
+
+requiredVersions:
+  azd: ">= 1.21.3"
+  extensions:
+    azure.ai.agents: latest
+
+infra:
+  provider: bicep
+  path: ./infra
+  module: main
+
+services:
+  # Lab 1 占位 agent(由 `azd ai agent init` 自动注入到这里)
+  # Lab 3 学员会再加 billing-agent / triage-agent 等服务条目
+
+  observability:
+    project: ../observability/swa
+    host: staticwebapp
+    dist: src/dist
+    config:
+      apiLocation: api
+      outputLocation: dist
+      appLocation: src
+      appBuildCommand: npm run build
+      apiBuildCommand: npm run build

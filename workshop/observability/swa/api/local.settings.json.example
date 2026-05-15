@@ -1,0 +1,9 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "APPINSIGHTS_APPLICATION_ID": "<set-by-bicep-at-deploy>",
+    "WORKSHOP_DEFAULT_AGENT": "billing-agent"
+  }
+}

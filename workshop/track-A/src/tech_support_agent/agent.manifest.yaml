@@ -1,0 +1,16 @@
+agent:
+  name: tech-support-agent
+  description: Technical support specialist (bugs / config / runtime errors).
+
+  instructions:
+    file: ../../personas/tech-support-agent.md
+
+  model: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+
+  tools:
+    - type: code_interpreter
+    # Uncomment once you have product-docs index in Azure AI Search:
+    # - type: azure_ai_search
+    #   azure_ai_search:
+    #     index_name: product-docs
+    #     project_connection_id: ${AZURE_AI_SEARCH_CONNECTION_ID}

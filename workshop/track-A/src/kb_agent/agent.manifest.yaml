@@ -1,0 +1,20 @@
+agent:
+  name: kb-agent
+  description: Knowledge-base agent with citations.
+
+  instructions:
+    file: ../../personas/kb-agent.md
+
+  model: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+
+  tools:
+    # Server-side retrieval — connect once you have a vector store / search index:
+    # - type: file_search
+    #   file_search:
+    #     vector_store_ids:
+    #       - ${KB_DOCS_VECTOR_STORE_ID}
+    # - type: azure_ai_search
+    #   azure_ai_search:
+    #     index_name: kb-docs
+    #     project_connection_id: ${AZURE_AI_SEARCH_CONNECTION_ID}
+    - type: code_interpreter

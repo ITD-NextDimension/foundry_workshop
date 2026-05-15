@@ -1,0 +1,45 @@
+defaultEnvironment: dev
+
+environments:
+  dev:
+    projectEndpoint: ${AZURE_AI_PROJECT_ENDPOINT}
+    agents:
+      - name: triage-agent
+        personaFile: personas/triage-agent.md
+        version: 1.0.0
+      - name: billing-agent
+        personaFile: personas/billing-agent.md
+        version: 1.0.0
+      - name: tech-support-agent
+        personaFile: personas/tech-support-agent.md
+        version: 1.0.0
+      - name: kb-agent
+        personaFile: personas/kb-agent.md
+        version: 1.0.0
+
+    observability:
+      applicationInsightsConnectionString: ${APPLICATIONINSIGHTS_CONNECTION_STRING}
+      swaUrl: ${SWA_URL}
+
+    # Placeholder testCases for Phase 3 batch evaluation; workshop does not run these.
+    testCases:
+      - id: smoke-core
+        priority: P0
+        agent: billing-agent
+        dataset: billing-agent-eval-seed
+        datasetVersion: v1
+        datasetFile: .foundry/datasets/billing-agent-eval-seed-v1.jsonl
+        evaluators:
+          - { name: relevance, threshold: 4 }
+          - { name: indirect_attack, threshold: 0 }
+          - { name: refund_policy_adherence, threshold: 1, definitionFile: .foundry/evaluators/refund-policy-adherence.yaml }
+
+      - id: trace-regressions
+        priority: P1
+        agent: billing-agent
+        dataset: billing-agent-traces
+        datasetVersion: v1
+        datasetFile: .foundry/datasets/billing-agent-traces-v1.jsonl
+        evaluators:
+          - { name: task_adherence, threshold: 4 }
+          - { name: behavioral_adherence, threshold: 4, definitionFile: .foundry/evaluators/behavioral-adherence.yaml }
