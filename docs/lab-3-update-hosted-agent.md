@@ -80,6 +80,20 @@ azd deploy research-agent
 
 ## 3.7 验证 hosted endpoint
 
+**🖥️  图形化多轮对话 (推荐)**
+
+```powershell
+..\workshop-scripts\chat-hosted.ps1
+```
+
+在浏览器里跟自己的 agent 多轮聊天 (详见 Lab 1 §1.7). 业务问题示例:
+
+- "帮我研究'消费级 AI 笔记应用'品类, 2025 重点对比 5 家"
+- "刚才说的第二家, 找两个负面评价"   ← 多轮上下文应该 hit
+- "X 公司值不值得投资?" ← 应该触发 guardrail 拒答
+
+**💻  命令行单 prompt (CI / 脚本)**
+
 ```powershell
 ..\workshop-scripts\invoke-hosted.ps1 `
     -AgentName "research-agent-$env:STUDENT_SUFFIX" `

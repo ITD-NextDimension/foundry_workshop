@@ -126,7 +126,9 @@ foundry_workshop/                            # 仓库根
 ├── workshop-scripts/                        # 学员工具脚本
 │   ├── install-maf-copilot-skills.ps1       # Lab 0:启用 VS Code Copilot customization
 │   ├── sanity-check.ps1                     # Lab 1/3:azd env / hosted agent / ACR 推送权限自检
-│   ├── invoke-hosted.ps1                    # Lab 1/3/4:调 hosted agent /responses 端点
+│   ├── invoke-hosted.ps1                    # Lab 1/3/4:命令行调 hosted agent /responses 端点 (单次)
+│   ├── chat-hosted.ps1                      # Lab 1/3:启动浏览器图形化多轮聊天 (不需要 Azure Portal)
+│   ├── chat-hosted/index.html               #   ↑ 单文件 chat UI (深色, 调 /responses, 多轮上下文)
 │   └── lint-persona.py                      # Lab 2:校验 persona frontmatter / include 引用
 │
 ├── observability/

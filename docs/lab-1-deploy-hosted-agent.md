@@ -129,13 +129,34 @@ azd deploy
 
 ## 1.7 拿预览 URL 跑一次
 
+两条路径任选, **二选一**:
+
+**🖥️  图形化聊天 (推荐, 像 ChatGPT 一样多轮对话)**
+
+```powershell
+..\workshop-scripts\chat-hosted.ps1
+```
+
+脚本会:
+
+1. 从 azd env 读 endpoint + agent name
+2. 用学员 SP token (az account get-access-token)
+3. 把 endpoint / agent / token 注入到本地单文件 HTML 的 `#cfg=` URL hash
+4. 在默认浏览器中打开 chat UI
+
+打开后你会看到一个深色聊天界面, 输入消息按 Enter 即可. UI 直接调 `/responses` 端点; 多轮上下文保留在页面里; 失败时显示 HTTP 状态 + 原始 body 方便排错. **不需要登 Azure Portal**.
+
+> token 仅注入到本地 URL hash, 不会发送到任何第三方服务. 一般 1 小时左右失效, 重跑 `chat-hosted.ps1` 即可换新.
+
+**💻  命令行单次验证 (适合自动化 / CI)**
+
 ```powershell
 azd env get-value AGENT_RESEARCH_AGENT_${env:STUDENT_SUFFIX}_RESPONSES_ENDPOINT
 # 或直接用脚本
 ..\workshop-scripts\invoke-hosted.ps1 -AgentName "research-agent-$env:STUDENT_SUFFIX" -Prompt "ping"
 ```
 
-返回 JSON 含 `output_text` 即 OK。
+返回 JSON 含 `output_text` 即 OK.
 
 > 想了解 `/responses` 协议细节、SSE 流式、错误码,直接问 Copilot:`@workspace 参考 #file:.agents/skills/microsoft-foundry/foundry-agent/invoke/invoke.md,解释 hosted agent 的 invocations 协议`(CLI 学员把 SKILL 内容拼到 prompt)。
 
