@@ -139,16 +139,16 @@ azd deploy
 
 脚本会:
 
-1. 从 azd env 读 endpoint + agent name
-2. 用学员 SP token (az account get-access-token)
+1. 从 `.env` / 进程 env / azd env 读 SP 凭据 + endpoint + agent name
+2. **直接 OAuth2 client_credentials grant** 拿 AAD token (audience `https://ai.azure.com/.default`) —— **不依赖 `az login`, 不依赖 `azd auth`**, 学员只要 SP 凭据填好就行
 3. 把 endpoint / agent / token 注入到本地单文件 HTML 的 `#cfg=` URL hash
 4. 在默认浏览器中打开 chat UI
 
-打开后你会看到一个深色聊天界面, 输入消息按 Enter 即可. UI 直接调 `/responses` 端点; 多轮上下文保留在页面里; 失败时显示 HTTP 状态 + 原始 body 方便排错. **不需要登 Azure Portal**.
+打开后你会看到一个深色聊天界面, 输入消息按 Enter 即可. UI 直接调 `/responses` 端点; 多轮上下文保留在页面里; 失败时显示 HTTP 状态 + 原始 body 方便排错. **不需要登 Azure Portal, 也不需要 az CLI**.
 
 > token 仅注入到本地 URL hash, 不会发送到任何第三方服务. 一般 1 小时左右失效, 重跑 `chat-hosted.ps1` 即可换新.
 
-**💻  命令行单次验证 (适合自动化 / CI)**
+**💻  命令行单次验证 (适合自动化 / CI; 用 az 拿 token)**
 
 ```powershell
 azd env get-value AGENT_RESEARCH_AGENT_${env:STUDENT_SUFFIX}_RESPONSES_ENDPOINT
