@@ -63,7 +63,7 @@ Invoke-RestMethod -Method POST `
   -Body $body
 ```
 
-> 一般直接用 `workshop-scripts/invoke-hosted.ps1` 即可,它把 token 获取 / URL 构造 / 重试都封装好了。
+> 一般直接用 `scripts/invoke-hosted.ps1` 即可,它把 token 获取 / URL 构造 / 重试都封装好了。
 
 ## 跨 shell 的环境变量
 
@@ -82,10 +82,10 @@ $env:AZURE_AI_PROJECT_ENDPOINT = azd env get-value AZURE_AI_PROJECT_ENDPOINT
 
 ```powershell
 # Get-ChildItem(等同 ls / dir)
-Get-ChildItem -Recurse -Filter "*.py" -Path .\track-A\
+Get-ChildItem -Recurse -Filter "*.py" -Path .\Lab-2-vibe-coding\
 
 # Test-Path
-if (Test-Path .\track-A\.azure\dev\.env) { Write-Host "yes" }
+if (Test-Path .\Lab-2-vibe-coding\.azure\dev\.env) { Write-Host "yes" }
 
 # 读写 JSON
 $env_data = Get-Content .azure\dev\.env -Raw

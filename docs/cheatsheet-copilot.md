@@ -1,7 +1,7 @@
 # 速查卡 · GitHub Copilot Chat / CLI 提示语
 
 > 工作坊支持两种 Copilot 环境二选一:
-> - **VS Code Copilot Chat**(默认推荐):打开 `track-A/`,Lab 0 已经启用 chatmode / instructions / prompts;`.agents/skills/` 下的微软官方 skill 会按关键词自动激活。
+> - **VS Code Copilot Chat**(默认推荐):打开 `Lab-2-vibe-coding/`,Lab 0 已经启用 chatmode / instructions / prompts;`.agents/skills/` 下的微软官方 skill 会按关键词自动激活。
 > - **GitHub Copilot CLI**(终端环境):用 `gh copilot suggest` / `gh copilot explain`;手动把 SKILL.md 作为 context 喂给它。
 
 ## 入口与触发方式(VS Code)
@@ -17,7 +17,7 @@
 
 ## 工作坊私有斜杠命令(VS Code 专属)
 
-来自 `track-A/.github/prompts/`,只在 VS Code Copilot Chat 中可用:
+来自 `Lab-2-vibe-coding/.github/prompts/`,只在 VS Code Copilot Chat 中可用:
 
 ```
 /persona  agentName=<name>      生成 Soul / 角色 markdown
@@ -66,7 +66,7 @@ gh copilot suggest "$ctx
 根据上面 skill 指南, 执行: 用 azd 把 src/research_agent 部署成 hosted agent"
 ```
 
-Lab 文档里 "VS Code 走法" 与 "Copilot CLI 走法" 二选一即可。VS Code 学员直接用斜杠命令;CLI 学员把对应斜杠命令的 prompt 内容(在 `track-A/.github/prompts/*.prompt.md`)粘贴当 prompt 输入。
+Lab 文档里 "VS Code 走法" 与 "Copilot CLI 走法" 二选一即可。VS Code 学员直接用斜杠命令;CLI 学员把对应斜杠命令的 prompt 内容(在 `Lab-2-vibe-coding/.github/prompts/*.prompt.md`)粘贴当 prompt 输入。
 
 ## 黄金模板(不用斜杠时)
 
@@ -160,7 +160,7 @@ body 顶部用 {{include: shared/guardrails.md}} inline 共享 guardrails
 ## 反查 trace 的提示语(Lab 4)
 
 ```text
-这是一段 conversation span tree(来自 observability/local/index.html 或 my-traces.json):
+这是一段 conversation span tree(来自 Lab-4-observability/index.html 或 my-traces.json):
 1) 找出耗时最长的 span,并解释为什么
 2) 哪个 tool 失败了?error_type 是什么?
 3) 如果是 guardrail_refusal,对应 persona 的哪条边界?
