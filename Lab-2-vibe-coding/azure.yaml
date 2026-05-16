@@ -22,3 +22,13 @@ services:
                     cpu: "1"
                     memory: 2Gi
             startupCommand: python -m src.research_agent.main
+hooks:
+    postdeploy:
+        windows:
+            name: postdeploy
+            kind: pwsh
+            shell: pwsh
+            run: ./hooks/postdeploy-grant-roles.ps1
+        posix:
+            shell: pwsh
+            run: ./hooks/postdeploy-grant-roles.ps1
