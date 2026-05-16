@@ -50,11 +50,11 @@ $Secret  = "<AZURE_CLIENT_SECRET>"
 $TenId   = "<AZURE_TENANT_ID>"
 $SubId   = "<AZURE_SUBSCRIPTION_ID>"
 
-# 1. azd 登录
-azd auth login --client-id $AppId --client-secret $Secret --tenant-id $TenId
+# 1. azd 登录(注意必须用 `=`，否则 PS5.1 在 secret 含 `-` `s` 等字符时会把它当下个参数前缀吞掉)
+azd auth login --client-id $AppId --tenant-id $TenId --client-secret=$Secret
 
 # 2. az 登录(azd 内部 hook 还会调 az)
-az login --service-principal --username $AppId --password $Secret --tenant $TenId | Out-Null
+az login --service-principal -u $AppId "--password=$Secret" --tenant $TenId | Out-Null
 az account set --subscription $SubId
 
 # 3. azd 默认订阅

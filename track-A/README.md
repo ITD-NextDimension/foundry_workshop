@@ -27,7 +27,7 @@ track-A/
 ├── skills/
 │   ├── market-research/SKILL.md       # 4 步流程:拆解→检索→整合→报告
 │   └── citation-format/SKILL.md       # 引用与脚注规范
-├── tools/                             # @ai_function (Python)
+├── tools/                             # @tool (Python)
 │   ├── web_search.py
 │   ├── web_fetch.py
 │   ├── report_builder.py

@@ -7,7 +7,7 @@
 | 场景 | 写法 | 说明 |
 |------|------|------|
 | 普通字符串 | `"hello"` 或 `'hello'` | 单引号 = 字面;双引号 = 插值 |
-| 含 `$` `!` 等特殊字符的 secret | **必用双引号** `"P@ss!w0rd$xyz"` | 单引号下 `$` 不会被解析,但 azd CLI 仍按字面字符串接收 |
+| 含 `$` `!` 等特殊字符的 secret | **必用双引号** `"P@ss!w0rd$xyz"`;CLI 参数用 `=` 语法 `--client-secret=$Secret` | 单引号下 `$` 不会被解析,但 azd CLI 仍按字面字符串接收;若 secret 含 `-` `s` 等会被 PS5.1 当成下一个参数前缀,**必须**用 `=` |
 | secret 含双引号 | `"abc`"def"` | 用 backtick `` ` `` 转义 |
 | 单引号字符串里含单引号 | `'it''s'` | 重复单引号转义 |
 | 多行字符串 | `@" ... "@`(here-string) | 含 `$` 会被插值;改 `@' ... '@` 不插值 |
@@ -20,12 +20,12 @@ $Secret   = "<secret>"
 $TenantId = "<tid>"
 $SubId    = "<subId>"
 
-# azd
-azd auth login --client-id $AppId --client-secret $Secret --tenant-id $TenantId
+# azd — 注意必须用 `=` 语法，否则 PS5.1 可能把 secret 当下个参数前缀吞掉
+azd auth login --client-id $AppId --tenant-id $TenantId --client-secret=$Secret
 azd auth login --check-status
 
-# az
-az login --service-principal --username $AppId --password $Secret --tenant $TenantId
+# az — `--password=` 同理；secret 含 `-` 开头风险字符时不加 `=` 会失败
+az login --service-principal -u $AppId "--password=$Secret" --tenant $TenantId
 az account set --subscription $SubId
 az account show
 ```

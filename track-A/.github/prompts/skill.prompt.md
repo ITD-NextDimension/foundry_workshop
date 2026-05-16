@@ -8,7 +8,7 @@ description: 生成一份 SKILL.md
 
 - 用途（一句话）：${input:purpose}
 - 触发条件（2-4 条）：${input:triggers}
-- 涉及的 @ai_function 工具：${input:tools}
+- 涉及的 @tool 函数：${input:tools}
 - 涉及的其它 skills（如有）：${input:relatedSkills}
 
 请输出严格按 instructions 的 frontmatter + 编号步骤的 SKILL.md。

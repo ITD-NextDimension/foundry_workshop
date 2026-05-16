@@ -1,49 +1,24 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
-# 工作坊设计: 学员不 provision 任何 Azure 资源, 共享 Foundry account / project /
-# 模型 deployment / ACR 由讲师在配套仓库中预部署。学员在这里只做一件事:
-# 通过 `azd deploy <agent>` 把自己后缀的 hosted agent 推到共享 project。
-#
-# 因此本文件:
-# - 没有 infra: 块                (学员 SP 无 RG provision 权限)
-# - services 只有 research-agent  (host=azure.ai.agent, ACR remote build)
-# - config.deployments[] 故意为空 (共享 deployment 由预部署创建, 通过 azd env 引用)
-#
-# 学员通过 azd env set 注入(从讲师下发的凭据复制):
-#   AZURE_AI_PROJECT_ENDPOINT       (讲师提供)
-#   AZURE_AI_MODEL_DEPLOYMENT_NAME  (讲师提供)
-#   STUDENT_SUFFIX / AGENT_NAME     (讲师分配)
-#   AZURE_CONTAINER_REGISTRY_NAME / ENDPOINT (讲师提供; ACR remote build)
-#
-# 如果误跑 `azd provision` / `azd up`, 会因为没有 infra 而失败 —— 这是预期行为。
-# 工作坊只用 `azd deploy`。
-
 requiredVersions:
-  azd: '>= 1.21.3'
-  extensions:
-    azure.ai.agents: latest
-
+    azd: '>= 1.21.3'
+    extensions:
+        azure.ai.agents: latest
 name: foundry-copilot-workshop-research
-
 metadata:
-  template: foundry-copilot-workshop@2.0.0
-
+    template: foundry-copilot-workshop@2.0.0
 services:
-  research-agent:
-    project: src/research_agent
-    host: azure.ai.agent
-    language: docker
-    docker:
-      remoteBuild: true
-    config:
-      container:
-        resources:
-          cpu: "1"
-          memory: 2Gi
-        scale:
-          minReplicas: 1
-          maxReplicas: 3
-      # deployments[] 故意为空 — 共享 deployment 由预部署创建。
-      # azd ai agent init 通过 ${AZURE_AI_MODEL_DEPLOYMENT_NAME} 引用即可。
-      deployments: []
-      startupCommand: python -m src.research_agent.main
+    research-agent:
+        project: src/research_agent
+        host: azure.ai.agent
+        language: docker
+        docker:
+            path: ./Dockerfile
+            context: ../..
+            remoteBuild: true
+        config:
+            container:
+                resources:
+                    cpu: "1"
+                    memory: 2Gi
+            startupCommand: python -m src.research_agent.main

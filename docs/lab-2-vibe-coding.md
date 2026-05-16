@@ -202,7 +202,7 @@ explain this span tree and why no web_fetch followed the search
 |------|---------|
 | 生成新 persona | `/persona` 斜杠 (VS Code) / `persona.prompt.md` 模板 (CLI) |
 | 生成新 SKILL.md | `/skill` 斜杠 / `skill.prompt.md` 模板 |
-| 生成新 @ai_function | `/tool` 斜杠 / `tool.prompt.md` 模板 |
+| 生成新 @tool | `/tool` 斜杠 / `tool.prompt.md` 模板 |
 | 解释 trace span | 截图 → Chat / `gh copilot explain` |
 | 重构加超时/日志 | 选中代码 → `Ctrl+I` → `add 30s timeout and OTel span` |
 
@@ -222,7 +222,7 @@ explain this span tree and why no web_fetch followed the search
 | `FoundryChatClient` 401 | `az account get-access-token --resource https://ai.azure.com` 不行就 `azd auth login` 重登 |
 | `agentdev run` 端口冲突 | `--port 8088` / `--port 8089` |
 | Copilot 没按 instructions 走(例如生成 dict 而不是 pydantic) | 在 Chat 开头加上 `Use #file:.github/instructions/maf-tools.instructions.md` |
-| 模型一直说"不知道工具",不调 `@ai_function` | 检查 `@ai_function(description=...)` 中文描述够不够具体 |
+| 模型一直说"不知道工具",不调 `@tool` | 检查 `@tool(description=...)` 中文描述够不够具体 |
 | Skill 文件没被加载 | 检查 `SkillsProvider.from_paths(skill_paths=[...])` 路径;SKILL.md 必须在子目录中 |
 
 → [Lab 3 · 把本地 agent 推到 hosted](lab-3-update-hosted-agent.md)

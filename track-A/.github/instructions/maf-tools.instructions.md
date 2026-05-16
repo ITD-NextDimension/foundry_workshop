@@ -2,7 +2,7 @@
 applyTo: 'tools/**/*.py'
 ---
 
-You are writing a client-side **MAF `@ai_function` tool** for the workshop research agent.
+You are writing a client-side **MAF `@tool` function** for the workshop research agent.
 
 ## Mandatory structure
 
@@ -15,7 +15,7 @@ import os
 from typing import Literal
 
 import httpx
-from agent_framework import ai_function
+from agent_framework import tool
 from opentelemetry import trace
 from pydantic import BaseModel, Field
 
@@ -28,7 +28,7 @@ class <ToolName>Result(BaseModel):
     ...
 
 
-@ai_function(
+@tool(
     name="<tool_name>",
     description=(
         "<中文：何时调用、输入要点、输出含义>"
@@ -63,10 +63,10 @@ async def <tool_name>(...) -> <ToolName>Result:
 - Always include a mock branch — `WORKSHOP_<tool>_FORCE_MOCK=1` should also force-mock if relevant.
 - Set OTel attributes for: provider/source, cached, key parameters (avoid PII).
 - Description (Chinese) tells the model *when* to call this tool — be specific, not generic.
-- Don't call other `@ai_function` tools from inside; the agent orchestrates.
+- Don't call other `@tool` functions from inside; the agent orchestrates.
 
 ## Don't
 
-- Don't import `agent_framework.openai.FoundryChatClient` here (that's `src/shared/client_factory.py`'s job).
+- Don't import `agent_framework.foundry.FoundryChatClient` here (that's `src/shared/client_factory.py`'s job).
 - Don't write to disk except via temp dirs.
 - Don't log secrets / Bearer tokens.

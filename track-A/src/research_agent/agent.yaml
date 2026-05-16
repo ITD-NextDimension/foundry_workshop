@@ -1,37 +1,19 @@
-kind: HostedAgent
+# yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/AgentSchema/refs/heads/main/schemas/v1.0/ContainerAgent.yaml
+kind: hosted
 name: research-agent
 description: 市场/竞品研究助手 — web search + fetch + 结构化报告。
-host: azure.ai.agent
-language: docker
-
-docker:
-  remoteBuild: true
-  context: ../..
-  dockerfile: ./Dockerfile
-
+protocols:
+  - protocol: responses
+    version: 1.0.0
 resources:
-  cpu: "1"
-  memory: 2Gi
-
-scale:
-  minReplicas: 1
-  maxReplicas: 3
-
-env:
-  AZURE_AI_PROJECT_ENDPOINT:
+  cpu: '1'
+  memory: '2Gi'
+environment_variables:
+  - name: AZURE_AI_PROJECT_ENDPOINT
     value: ${AZURE_AI_PROJECT_ENDPOINT}
-  AZURE_AI_MODEL_DEPLOYMENT_NAME:
+  - name: AZURE_AI_MODEL_DEPLOYMENT_NAME
     value: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
-  AGENT_NAME:
-    value: ${AGENT_NAME}
-  # 由讲师下发的凭据注入；学员后缀（如 stu01）让多人共享 project 时 hosted agent 名不冲突。
-  STUDENT_SUFFIX:
+  - name: STUDENT_SUFFIX
     value: ${STUDENT_SUFFIX}
-  # 可观测：Foundry 自带 tracing，data plane API 直接拉，不需要 App Insights。
-  OTEL_GENAI_CAPTURE_MESSAGE_CONTENT:
-    value: "false"
-  # 真实 Web search：留空走 mock。
-  BING_SEARCH_API_KEY:
-    value: ${BING_SEARCH_API_KEY}
-  PORT:
-    value: "8087"
+  - name: OTEL_GENAI_CAPTURE_MESSAGE_CONTENT
+    value: 'false'

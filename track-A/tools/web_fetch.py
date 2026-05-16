@@ -11,7 +11,7 @@ import re
 from datetime import date
 
 import httpx
-from agent_framework import ai_function
+from agent_framework import tool as ai_function
 from opentelemetry import trace
 from pydantic import BaseModel, Field
 

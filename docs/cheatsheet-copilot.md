@@ -22,7 +22,7 @@
 ```
 /persona  agentName=<name>      生成 Soul / 角色 markdown
 /skill    skillName=<name>      生成 SKILL.md(流程说明书)
-/tool     toolName=<name>       生成 @ai_function(pydantic + OTel + mock 兜底)
+/tool     toolName=<name>       生成 @tool 函数(pydantic + OTel + mock 兜底)
 /deploy   agentDir=<dir>        生成 agent.yaml + agent.manifest.yaml
 ```
 
@@ -96,7 +96,7 @@ body 顶部用 {{include: shared/guardrails.md}} inline 共享 guardrails
 用途:<一句话>
 触发条件:
   - <用户怎么说时调用>
-工具:<@ai_function 名字>
+工具:<@tool 函数名>
 步骤:
   1. ...
   2. ...
@@ -110,7 +110,7 @@ body 顶部用 {{include: shared/guardrails.md}} inline 共享 guardrails
 ```text
 @workspace 参考 #file:tools/web_search.py 与 #file:.github/instructions/maf-tools.instructions.md。
 
-写 tools/<name>.py 的 @ai_function <fn>:
+写 tools/<name>.py 的 @tool <fn>:
 - 输入:<name>: <type>(中文描述)
 - 输出:pydantic <Name>Result 含 <fields>
 - 真实调用:<API + env key>
@@ -127,7 +127,7 @@ body 顶部用 {{include: shared/guardrails.md}} inline 共享 guardrails
 为 src/<my-agent>/main.py 生成两个 yaml。
 
 要求:
-- kind: HostedAgent / host: azure.ai.agent / docker.remoteBuild: true
+- kind: hosted / host: azure.ai.agent / docker.remoteBuild: true
 - resources: cpu 1 / memory 2Gi / scale 1-3
 - env 注入: AZURE_AI_PROJECT_ENDPOINT / AZURE_AI_MODEL_DEPLOYMENT_NAME / AGENT_NAME / STUDENT_SUFFIX
 - agent.manifest.yaml: instructions.file 指向 ../../personas/<agent>.md
@@ -170,6 +170,6 @@ body 顶部用 {{include: shared/guardrails.md}} inline 共享 guardrails
 
 ## 出错时
 
-- 生成内容不对 → "再试一次,把 `@ai_function` 的 description 写成具体的中文,模型按描述选工具"
+- 生成内容不对 → "再试一次,把 `@tool` 的 description 写成具体的中文,模型按描述选工具"
 - 生成代码不通 lint → 把 `#file:.github/instructions/maf-tools.instructions.md` 引用进上下文重生
 - Persona 与 SKILL 互相矛盾 → "diff 给我两段,reconcile 后输出最终版本"

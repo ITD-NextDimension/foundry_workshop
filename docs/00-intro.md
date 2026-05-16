@@ -6,7 +6,7 @@
 
 - **Soul**:角色边界、口吻、拒绝策略 → `personas/*.md`
 - **Skills**:完成任务的步骤说明书 → `skills/<skill>/SKILL.md`
-- **Tools**:调外部 API / 写状态的函数 → `tools/*.py`(`@ai_function`)
+- **Tools**:调外部 API / 写状态的函数 → `tools/*.py`(`@tool`)
 - **Runtime**:模型 + 容器 + 路由 → Microsoft Foundry Hosted Agent
 
 `harness` 把这些按目录约定组织起来,可版本化、可评估、可观测。
@@ -18,8 +18,8 @@
 │  L3 应用层    Hosted Agent 容器 = MAF Agent                │  ← Lab 2/3 主战场
 │              ├── instructions ← personas/*.md   (Soul)     │
 │              ├── context_providers=[SkillsProvider]        │
-│              ├── tools=[client-side @ai_function …]        │
-│              └── client = FoundryChatClient                │
+│              ├── tools=[client-side @tool …]              │
+│              └── client = FoundryChatClient (.foundry)     │
 ├─────────────────────────────────────────────────────────────┤
 │  L2 模型与工具层  Foundry server-side tools                │  ← Lab 1/3 涉及
 │                  + Foundry Model Deployments               │     (讲师事前预部署)

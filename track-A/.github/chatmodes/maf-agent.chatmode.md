@@ -13,7 +13,7 @@ The agent is structured into **Soul · Skills · Tools**:
 
 - **Soul** = `personas/<agent>.md` (markdown with frontmatter; supports `{{include: shared/guardrails.md}}`)
 - **Skills** = `skills/<skill>/SKILL.md` (markdown describing the process); loaded by `agent_framework.SkillsProvider`
-- **Tools** = `tools/<name>.py` Python `@ai_function` (pydantic in/out, OTel spans, mock + real call fallback)
+- **Tools** = `tools/<name>.py` Python `@tool` function (pydantic in/out, OTel spans, mock + real call fallback)
 
 The agent itself: `src/<agent>/main.py` builds an `agent_framework.Agent` and serves it via `ResponsesHostServer` locally / Foundry hosted runtime in prod.
 
@@ -22,10 +22,10 @@ The agent itself: `src/<agent>/main.py` builds an `agent_framework.Agent` and se
 1. **Pydantic everywhere**: tool inputs/outputs are pydantic models, not raw dicts.
 2. **Mock + real fallback**: every tool checks env (e.g. `BING_SEARCH_API_KEY`) and falls back to a local mock so the learner can run offline. Log a warning when falling back.
 3. **OTel spans**: wrap each tool call body in `tracer.start_as_current_span(...)` with attribute setting; helpful for Lab 4 tracing API.
-4. **Chinese descriptions**: `@ai_function(description=...)` uses concise Chinese — the model selects tools by description, so be specific about *when* to call.
+4. **Chinese descriptions**: `@tool(description=...)` uses concise Chinese — the model selects tools by description, so be specific about *when* to call.
 5. **No secrets in code**: env vars only; never hard-code keys.
 6. **Hosted agent specifics**:
-   - `agent.yaml` = deployment metadata (`kind: HostedAgent`, `language: docker`, `docker.remoteBuild: true`, env block).
+   - `agent.yaml` = deployment metadata (`kind: hosted`, `language: docker`, `docker.remoteBuild: true`, env block).
    - `agent.manifest.yaml` = runtime config (`model: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}`, server-side tools like `code_interpreter` / `grounding_with_bing_search`).
    - Dockerfile must use `--platform=linux/amd64`.
 

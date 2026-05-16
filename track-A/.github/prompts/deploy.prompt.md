@@ -7,7 +7,7 @@ description: 生成 agent.yaml + agent.manifest.yaml 用于 Foundry hosted agent
 为 `#file:src/${input:agentDir}/main.py` 生成对应的 agent.yaml 与 agent.manifest.yaml：
 
 agent.yaml 要求：
-- kind: HostedAgent
+- kind: hosted
 - name: ${input:agentDeployName}     # 末尾加 -${STUDENT_SUFFIX}
 - host: azure.ai.agent
 - language: docker，docker.remoteBuild: true

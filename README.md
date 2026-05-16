@@ -115,7 +115,7 @@ foundry_workshop/                            # 仓库根
 │   ├── skills/                              # SKILL.md(工作坊业务流程,与 .agents/skills 区分)
 │   │   ├── market-research/SKILL.md
 │   │   └── citation-format/SKILL.md
-│   ├── tools/                               # @ai_function (Python)
+│   ├── tools/                               # @tool (Python)
 │   │   ├── web_search.py / web_fetch.py / report_builder.py
 │   │   └── _shared/auth.py                  # DefaultAzureCredential 工厂
 │   ├── src/

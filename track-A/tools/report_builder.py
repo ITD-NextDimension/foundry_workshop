@@ -1,11 +1,10 @@
 """Report builder tool — 把 sections + sources 组装成 persona 契约里的最终 JSON。"""
-from __future__ import annotations
 
 import logging
 from datetime import date
 from typing import Literal
 
-from agent_framework import ai_function
+from agent_framework import tool as ai_function
 from opentelemetry import trace
 from pydantic import BaseModel, Field, field_validator
 

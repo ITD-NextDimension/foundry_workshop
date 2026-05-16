@@ -42,7 +42,7 @@ VS Code:
 
 Copilot 会按 `.github/prompts/deploy.prompt.md` 重写两个 yaml,并保证:
 
-- `kind: HostedAgent`,`host: azure.ai.agent`,`docker.remoteBuild: true`
+- `kind: hosted`,`host: azure.ai.agent`,`docker.remoteBuild: true`
 - 资源 cpu 1 / memory 2Gi,scale 1-3
 - env: `AZURE_AI_PROJECT_ENDPOINT / AZURE_AI_MODEL_DEPLOYMENT_NAME / AGENT_NAME / STUDENT_SUFFIX`
 - `model: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}`(不写死,引用预部署 deployment)

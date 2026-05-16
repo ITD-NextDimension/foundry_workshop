@@ -21,7 +21,7 @@ scripts:
 ## Body conventions
 
 - Use **numbered steps** (1, 2, 3 …). Each step has a single concrete action.
-- Reference tools by exact `@ai_function` name (`web_search`, `web_fetch`, `report_builder`).
+- Reference tools by exact `@tool` name (`web_search`, `web_fetch`, `report_builder`).
 - Reference other skills by `name` if cross-skill flow is intended.
 - End with a brief 边界 / pitfalls section.
 
