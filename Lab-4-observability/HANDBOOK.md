@@ -71,18 +71,18 @@ done
 **macOS / Linux（bash）**
 
 ```bash
-# 需要 PowerShell 跨平台版： brew install --cask powershell 或 apt install -y powershell
-pwsh ../Lab-4-observability/fetch-traces.ps1 -Minutes 60
+# 依赖 curl + jq：brew install jq 或 apt install -y jq
+../Lab-4-observability/fetch-traces.sh --minutes 60
 # ✅ 写出 .../Lab-4-observability/data/my-traces.json
 #    conversations=5  ok=2  fail=3  p95=11240ms
 ```
 
-参数:
+参数（PowerShell 与 bash 同步）：
 
-- `-Minutes 60`:时间窗口
-- `-MaxThreads 20`:最多拉多少 thread
-- `-AgentName research-agent-stu07`:默认从 `azd env STUDENT_SUFFIX` 推导
-- `-ApiVersion 2025-05-15-preview`:若你环境的 preview 版本不同,可换
+- `-Minutes 60` / `--minutes 60`：时间窗口
+- `-Interval PT5M` / `--interval PT5M`：聚合间隔
+- `-AgentName ...` / `--agent-name ...`：默认从 `.env` 的 `STUDENT_SUFFIX` 推导
+- `-OutputPath ...` / `--output-path ...`：输出路径（默认 `data/my-metrics.js`）
 
 ## 4.5 打开本地 HTML
 

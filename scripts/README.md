@@ -25,7 +25,7 @@ scripts/
 | `azd deploy` postdeploy 钩子：给 agent per-version MI 授 AcrPull + Azure AI User | Lab 1 / Lab 3（自动） | [`Windows/grant-agent-runtime-roles.ps1`](./Windows/grant-agent-runtime-roles.ps1) | [`macOSLinux/grant-agent-runtime-roles.sh`](./macOSLinux/grant-agent-runtime-roles.sh) |
 | 校验 persona frontmatter / `{{include}}` 引用 / 必备 section | Lab 2 | [`lint-persona.py`](./lint-persona.py)（共用） | [`lint-persona.py`](./lint-persona.py)（共用） |
 
-> Lab 4 的 `fetch-traces.ps1`（调 Foundry tracing data plane API 拉本人 agent 的 trace）单独放在 [`Lab-4-observability/`](../Lab-4-observability/) 下，与 HTML 在一起，目前仅 PowerShell 版。
+> Lab 4 的 `fetch-traces.*`（调 Foundry Monitor metrics 拉本人 agent 的 trace）单独放在 [`Lab-4-observability/`](../Lab-4-observability/) 下，与 HTML 在一起：Windows 用 `fetch-traces.ps1`，macOS / Linux 用 `fetch-traces.sh`（依赖 `curl` + `jq`）。
 
 ## 用法示例
 

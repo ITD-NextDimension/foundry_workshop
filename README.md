@@ -48,7 +48,7 @@ code Lab-4-observability/HANDBOOK.md
 
 - Windows 用 [`scripts/Windows/*.ps1`](scripts/Windows/)（PowerShell 7 / 5.1 都能跑）
 - macOS / Linux 用 [`scripts/macOSLinux/*.sh`](scripts/macOSLinux/)（bash 3.2+，macOS 默认 shell 即可，依赖 `curl` + `jq`）
-- Lab 4 的 `fetch-traces.ps1` 目前仅 PowerShell 版；macOS / Linux 学员请装 [`pwsh`](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-linux) 或参考脚本手动改写
+- Lab 4 的 `fetch-traces.*` 两个平台都有原生版：Windows 用 [`Lab-4-observability/fetch-traces.ps1`](Lab-4-observability/fetch-traces.ps1)，macOS / Linux 用 [`Lab-4-observability/fetch-traces.sh`](Lab-4-observability/fetch-traces.sh)
 
 ## 🗺️ 目录结构
 
@@ -115,7 +115,8 @@ foundry_workshop/
 │   ├── README.md
 │   ├── HANDBOOK.md
 │   ├── index.html
-│   ├── fetch-traces.ps1
+│   ├── fetch-traces.ps1                    # Windows
+│   ├── fetch-traces.sh                     # macOS / Linux (bash + curl + jq)
 │   └── data/traces.sample.json
 │
 ├── docs/                                  # 跨 Lab 速查 / 总览
@@ -134,7 +135,7 @@ foundry_workshop/
 1. 用 `azd deploy` 把一个 Foundry hosted agent 部署到共享 project（占位 → 自己业务两阶段）
 2. 用 GitHub Copilot（VS Code Chat 或 Copilot CLI 二选一）+ 仓库自带的 skill 套件写出 **Soul + Skills + Tools** 三件套，本地直接 `python -m src.research_agent.main` 跑通
 3. 把本地业务 agent 增量推回 hosted slot，hosted endpoint 200 OK
-4. **不登 Azure Portal、也不需要 az CLI**：用 `scripts/Windows/chat-hosted.ps1`（或 `scripts/macOSLinux/chat-hosted.sh`）浏览器多轮聊；用 `Lab-4-observability/fetch-traces.ps1` + 本地 HTML 看 trace
+4. **不登 Azure Portal、也不需要 az CLI**：用 `scripts/Windows/chat-hosted.ps1`（或 `scripts/macOSLinux/chat-hosted.sh`）浏览器多轮聊；用 `Lab-4-observability/fetch-traces.ps1`（或 `Lab-4-observability/fetch-traces.sh`）+ 本地 HTML 看 trace
 
 ## 🛠️ Copilot 双环境兼容
 
