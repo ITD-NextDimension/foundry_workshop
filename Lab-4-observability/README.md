@@ -13,10 +13,12 @@
 
 ## 用法
 
+**Windows（PowerShell）**
+
 ```powershell
 # 1. 制造点 trace：用 invoke-hosted.ps1 发几条
-..\scripts\invoke-hosted.ps1 -AgentName "research-agent-$env:STUDENT_SUFFIX" -Prompt "帮我研究消费级 AI 笔记应用"
-..\scripts\invoke-hosted.ps1 -AgentName "research-agent-$env:STUDENT_SUFFIX" -Prompt "对比国内三大新茶饮"
+..\scripts\Windows\invoke-hosted.ps1 -AgentName "research-agent-$env:STUDENT_SUFFIX" -Prompt "帮我研究消费级 AI 笔记应用"
+..\scripts\Windows\invoke-hosted.ps1 -AgentName "research-agent-$env:STUDENT_SUFFIX" -Prompt "对比国内三大新茶饮"
 
 # 2. 拉 trace (默认过去 60 分钟，20 条 thread)
 .\fetch-traces.ps1
@@ -24,6 +26,22 @@
 # 3. 在浏览器打开 index.html，顶栏选 my-traces.json
 start .\index.html
 ```
+
+**macOS / Linux（bash）**
+
+```bash
+# 1. 制造点 trace：用 invoke-hosted.sh 发几条
+../scripts/macOSLinux/invoke-hosted.sh --agent-name "research-agent-${STUDENT_SUFFIX}" --prompt "帮我研究消费级 AI 笔记应用"
+../scripts/macOSLinux/invoke-hosted.sh --agent-name "research-agent-${STUDENT_SUFFIX}" --prompt "对比国内三大新茶饮"
+
+# 2. 拉 trace（需要装 PowerShell： brew install --cask powershell 或 apt install -y powershell）
+pwsh ./fetch-traces.ps1
+
+# 3. 在浏览器打开 index.html，顶栏选 my-traces.json
+open ./index.html        # Linux 用 xdg-open ./index.html
+```
+
+> `fetch-traces.ps1` 内部需要 PowerShell 运行时; macOS / Linux 只要装了 `pwsh` (跨平台 PowerShell) 就能直接调。
 
 完整教学步骤见 [HANDBOOK.md](HANDBOOK.md)。
 
