@@ -1,0 +1,12 @@
+agent:
+  name: invoice-explainer-stu002
+  description: 发票解读助手 — OCR + 行项分类 + 多币种归一 + 异常 + PII 脱敏。
+
+  instructions:
+    file: ../../personas/invoice-explainer.md
+
+  model: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+
+  tools:
+    # code_interpreter 用于数学校验（sum(lineItems) == total 等）。
+    - type: code_interpreter

@@ -8,6 +8,20 @@ name: foundry-copilot-workshop-research
 metadata:
     template: foundry-copilot-workshop@2.0.0
 services:
+    invoice-explainer:
+        project: src/invoice_agent
+        host: azure.ai.agent
+        language: docker
+        docker:
+            path: ./Dockerfile
+            context: ../..
+            remoteBuild: true
+        config:
+            container:
+                resources:
+                    cpu: "1"
+                    memory: 2Gi
+            startupCommand: python -m src.invoice_agent.main
     research-agent:
         project: src/research_agent
         host: azure.ai.agent
@@ -30,5 +44,7 @@ hooks:
             shell: pwsh
             run: ./hooks/postdeploy-grant-roles.ps1
         posix:
+            name: postdeploy
+            kind: pwsh
             shell: pwsh
             run: ./hooks/postdeploy-grant-roles.ps1

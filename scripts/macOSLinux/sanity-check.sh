@@ -171,7 +171,7 @@ if [[ -n "$acr_name" && -n "$client_id" && -n "$secret" && -n "$tenant_id" && -n
 
     if [[ -n "$arm_token" ]]; then
         acr_url="https://management.azure.com/subscriptions/$sub_id/resourceGroups/foundry-workshop/providers/Microsoft.ContainerRegistry/registries/$acr_name/listBuildSourceUploadUrl?api-version=2019-06-01-preview"
-        resp=$(curl -fsS --max-time 15 -X POST -H "Authorization: Bearer $arm_token" "$acr_url" 2>/dev/null) || resp=""
+        resp=$(curl -fsS --max-time 15 -X POST -H "Authorization: Bearer $arm_token" -H "Content-Length: 0" "$acr_url" 2>/dev/null) || resp=""
         upload=$(echo "$resp" | jq -r '.uploadUrl // empty' 2>/dev/null)
         if [[ -n "$upload" ]]; then
             write_result "ACR '$acr_name' 可远程构建 (AcrPush + Contributor)" "true"

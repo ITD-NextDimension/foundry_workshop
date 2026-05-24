@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/AgentSchema/refs/heads/main/schemas/v1.0/ContainerAgent.yaml
 kind: hosted
-name: research-agent-stu002
-description: 市场/竞品研究助手 — web search + fetch + 结构化报告。
+name: invoice-explainer-stu002
+description: 发票解读助手 — OCR 抽取行项、按类目汇总、多币种归一、异常 + PII 标记。
 protocols:
   - protocol: responses
     version: 1.0.0
@@ -15,5 +15,9 @@ environment_variables:
     value: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
   - name: STUDENT_SUFFIX
     value: ${STUDENT_SUFFIX}
+  - name: AZURE_VISION_KEY
+    value: ${AZURE_VISION_KEY}
+  - name: AZURE_VISION_ENDPOINT
+    value: ${AZURE_VISION_ENDPOINT}
   - name: OTEL_GENAI_CAPTURE_MESSAGE_CONTENT
     value: 'false'

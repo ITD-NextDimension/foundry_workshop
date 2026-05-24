@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>macOS 部署踩坑实录 · Lab 0 + Lab 1 + Lab 2 + Lab 3 + Lab 4</title>
+<style>
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --link: #58a6ff;
+    --code-bg: #1f242c;
+    --code-text: #d2a8ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --cyan: #79c0ff;
+    --orange: #ff9b50;
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #ffffff;
+        --panel: #f6f8fa;
+        --border: #d0d7de;
+        --text: #1f2328;
+        --muted: #656d76;
+        --link: #0969da;
+        --code-bg: #f6f8fa;
+        --code-text: #6639ba;
+        --green: #1a7f37;
+        --red: #cf222e;
+        --yellow: #9a6700;
+        --cyan: #0550ae;
+        --orange: #bc4c00;
+    }
+}
+* { box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    line-height: 1.65;
+    font-size: 15px;
+}
+.container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+}
+h1 {
+    font-size: 32px;
+    margin: 0 0 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+}
+h2 {
+    font-size: 24px;
+    margin: 48px 0 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+h2:first-of-type { border-top: none; padding-top: 0; }
+h3 {
+    font-size: 18px;
+    margin: 32px 0 12px;
+    color: var(--orange);
+}
+h4 {
+    font-size: 15px;
+    margin: 16px 0 4px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+p { margin: 8px 0; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+}
+pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 12px 0;
+}
+pre code {
+    background: transparent;
+    color: var(--text);
+    padding: 0;
+    font-size: 13px;
+}
+blockquote {
+    border-left: 3px solid var(--yellow);
+    background: var(--panel);
+    margin: 12px 0;
+    padding: 8px 16px;
+    color: var(--muted);
+    border-radius: 0 6px 6px 0;
+}
+blockquote p { margin: 4px 0; }
+ul, ol { padding-left: 28px; }
+li { margin: 4px 0; }
+hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0;
+    font-size: 13px;
+}
+th, td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+}
+th {
+    background: var(--panel);
+    font-weight: 600;
+}
+tbody tr:nth-child(2n) { background: var(--panel); }
+.toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 24px;
+    margin: 24px 0 32px;
+}
+.toc ul { margin: 4px 0; padding-left: 22px; }
+.subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    border-left: 3px solid var(--cyan);
+    padding-left: 14px;
+    margin: 12px 0 24px;
+}
+.issue {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--orange);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 16px 0;
+}
+.issue h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+.label {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+.label-blocking { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+.label-partial { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
+.label-info { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+.success-banner {
+    background: rgba(63, 185, 80, 0.08);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 16px 22px;
+    margin: 24px 0;
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.85;
+}
+.success-banner .check { color: var(--green); }
+.diff-add { color: var(--green); }
+.diff-del { color: var(--red); }
+.meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>macOS 部署踩坑实录 · Lab 0 + Lab 1 + Lab 2 + Lab 3 + Lab 4</h1>
+<div class="subtitle">
+学员 <strong>stu002</strong> 在 MacBook（zsh + VS Code Insider）实际部署过程中遇到的所有问题、根因、修复方案。<br>
+共 <strong>23 处坑</strong>：8 处源于 README 缺漏，6 处源于第三方包/IDE，9 处源于脚本 bug 或环境特异性。
+</div>
+
+<div class="toc">
+<strong>目录</strong>
+<ul>
+    <li><a href="#lab0">Lab 0 · 本地环境（7 处）</a></li>
+    <li><a href="#lab1">Lab 1 · 部署 hosted agent（8 处）</a></li>
+    <li><a href="#lab2">Lab 2 · 本地 vibe-coding（4 处）</a></li>
+    <li><a href="#lab3">Lab 3 · 第二个 agent 上 hosted（2 处）</a></li>
+    <li><a href="#lab4">Lab 4 · trace + dashboard（2 处）</a></li>
+    <li><a href="#summary">汇总表</a></li>
+    <li><a href="#readme-fixes">建议改进 README 的地方</a></li>
+    <li><a href="#final">最终成功状态</a></li>
+</ul>
+</div>
+
+<h2 id="lab0">Lab 0 · 本地环境（7 处）</h2>
+
+<div class="issue">
+<h3>0.1 <code>code</code> 命令实际指向 Cursor，不是 VS Code <span class="label label-partial">部分阻塞</span></h3>
+<h4>症状</h4>
+<p><code>code --version</code> 输出 <code>3.0.16</code>（VS Code 当前版本是 1.105.x）。</p>
+<h4>根因</h4>
+<p>mac 安装 Cursor 时把 <code>code</code> 命令注册成它自己的 launcher（<code>/Applications/Cursor.app/Contents/Resources/app/bin/code</code>），覆盖 VS Code 的默认 <code>code</code>。</p>
+<h4>修复</h4>
+<pre><code>which code                                # 确认指向 Cursor
+which code-insiders                       # VS Code Insider 用这个
+code-insiders --version                   # 1.122.0-insider</code></pre>
+<p>Lab-0 脚本 <code>install-maf-copilot-skills.sh</code> 假设 <code>code</code> = VS Code，需手动替换为 <code>code-insiders</code> 或在 VS Code Insider 里手动确认。</p>
+</div>
+
+<div class="issue">
+<h3>0.2 <code>github.copilot-chat</code> 装不了 — 它是 Insider 的内置扩展 <span class="label label-info">不阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>code-insiders --install-extension github.copilot-chat
+Error: Extension 'github.copilot-chat' is a built-in extension
+       and not allowed to be updated in the current product quality 'insider'.</code></pre>
+<h4>根因</h4>
+<p>新版 VS Code Insider 把 Copilot Chat 作为<strong>内置扩展</strong>捆绑（在 <code>/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/extensions/copilot/</code>），不再从 Marketplace 装。</p>
+<h4>修复</h4>
+<p>直接用就好。<code>code-insiders --list-extensions</code> 不显示内置扩展，但其 <code>package.json</code> 显示 <code>name: copilot-chat, version: 0.50.x, publisher: GitHub</code>。</p>
+</div>
+
+<div class="issue">
+<h3>0.3 <code>github.copilot</code>（行内补全）也装不了 — 依赖 chat 被锁 <span class="label label-info">不阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>code-insiders --install-extension github.copilot
+Installing extension 'github.copilot'...
+Error while installing extension github.copilot-chat: ... built-in extension and not allowed to be updated
+Failed Installing Extensions: github.copilot-chat</code></pre>
+<h4>根因</h4>
+<p><code>github.copilot</code> 的元数据声明依赖 <code>github.copilot-chat</code>，CLI 安装器尝试"更新"依赖项，被内置保护拒绝。</p>
+<h4>修复</h4>
+<ul>
+    <li>在 VS Code Insider 的 Extensions UI 里手动搜 "GitHub Copilot" → Install Pre-Release（UI 装能正确处理 built-in 依赖）</li>
+    <li><strong>注意</strong>：Marketplace 页面会显示 "This extension is deprecated. Use the GitHub Copilot Chat extension instead." — 这是旧扩展的废弃公告，新版 chat 已包含行内补全功能，<strong>可以不装</strong>这个老扩展。</li>
+</ul>
+</div>
+
+<div class="issue">
+<h3>0.4 <code>sanity-check.sh</code> ACR 检查项报 HTTP 411 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<p>sanity-check 的最后一项 <code>ACR 'itdnd' 可远程构建</code> 显示 ❌ <code>listBuildSourceUploadUrl 失败</code>。</p>
+<h4>根因</h4>
+<p><code>scripts/macOSLinux/sanity-check.sh:174</code> 的 <code>curl -X POST</code> 没带 body，Azure ARM <code>listBuildSourceUploadUrl</code> 端点要求 <code>Content-Length</code> header，否则返回 HTTP 411 "Length Required"。</p>
+<h4>直接验证</h4>
+<pre><code>curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$ACR_URL"
+# 返回 HTML: &lt;h2&gt;Length Required&lt;/h2&gt;
+#           &lt;p&gt;HTTP Error 411. The request must be chunked or have a content length.&lt;/p&gt;</code></pre>
+<h4>修复</h4>
+<p>给 curl 加 <code>Content-Length: 0</code> header。已在本地仓库修复：</p>
+<pre><code><span class="diff-del">- resp=$(curl -fsS --max-time 15 -X POST -H "Authorization: Bearer $arm_token" "$acr_url" 2>/dev/null) || resp=""</span>
+<span class="diff-add">+ resp=$(curl -fsS --max-time 15 -X POST -H "Authorization: Bearer $arm_token" -H "Content-Length: 0" "$acr_url" 2>/dev/null) || resp=""</span></code></pre>
+<blockquote>⚠️ 这个 bug 在 PowerShell 脚本里也可能存在（PowerShell <code>Invoke-RestMethod</code> 默认会带 <code>Content-Length: 0</code>，所以不踩雷），但 bash 学员一定会踩。</blockquote>
+</div>
+
+<div class="issue">
+<h3>0.5 <code>maf-agent</code> chatmode 在 Copilot Chat 下拉里看不到 <span class="label label-info">parked</span></h3>
+<h4>症状</h4>
+<p>所有官方步骤都做完（settings.json 写好、Copilot 登录、订阅有效），但 Copilot Chat panel 的 mode 下拉里仍然没有 <code>maf-agent</code>。</p>
+<h4>根因（推测，未完全确认）</h4>
+<ul>
+    <li><code>~/.claude/</code> 全局的 SuperClaude framework 注册了一堆全局 chatmodes（<code>dev-agent</code>、<code>pm-agent</code>、<code>review-agent</code> 等），可能抢占了 <code>chat.modeFilesLocations</code> 的解析路径</li>
+    <li>或 workspace 没以 <code>Lab-2-vibe-coding/</code> 为根目录打开（VS Code 只对 active workspace 根读 <code>.vscode/settings.json</code>）</li>
+    <li>或 Copilot Chat panel 和 Claude Code panel 长得太像，混淆了</li>
+</ul>
+<h4>临时方案</h4>
+<p><strong>parked 到 Lab-2</strong>。<code>maf-agent</code> chatmode 是 Lab-2 vibe-coding 时辅助写代码的工具，不阻塞 Lab-0/1/3/4 部署链。</p>
+</div>
+
+<div class="issue">
+<h3>0.6 多个 Chat 扩展同时存在，UI 长得几乎一样 <span class="label label-info">易混淆</span></h3>
+<h4>症状</h4>
+<p>VS Code Insider 里至少 4 个看起来一样的 chat 面板：</p>
+<ul>
+    <li>内置 <code>github.copilot-chat</code>（"Chat" view）</li>
+    <li><code>anthropic.claude-code</code> 扩展（"Claude Code" view，有 CHAT/CLAUDE CODE/CODEX tabs）</li>
+    <li><code>openai.chatgpt</code> 扩展</li>
+    <li><code>ms-azuretools.vscode-azure-github-copilot</code></li>
+</ul>
+<p>学员误以为自己在 Copilot Chat 里，实际在 Claude Code 的面板中。</p>
+<h4>修复</h4>
+<p>用命令面板 <code>Cmd+Shift+P → Chat: Focus on Chat View</code>（精准定位到 GitHub Copilot Chat panel）。其他扩展的 chat view 命令前缀不一样（Claude Code 是 <code>Claude Code:</code> 前缀）。</p>
+</div>
+
+<div class="issue">
+<h3>0.7 <code>~/.azure/</code> 和 <code>~/.azure/azd/</code> 是两套独立 token cache <span class="label label-info">文档</span></h3>
+<h4>症状</h4>
+<p><code>azd auth login</code> OK 但 <code>az account show</code> 报 not logged in；或反过来。</p>
+<h4>根因</h4>
+<p>azd 和 az CLI <strong>不共享</strong> token cache。</p>
+<ul>
+    <li><code>azd auth login</code> → <code>~/.azure/azd/</code></li>
+    <li><code>az login</code> → <code>~/.azure/</code></li>
+</ul>
+<h4>修复</h4>
+<p>Lab-0 §0.4 必须两个都跑，README 已正确强调，但学员容易跳。</p>
+</div>
+
+<h2 id="lab1">Lab 1 · 部署 hosted agent（8 处）</h2>
+
+<div class="issue">
+<h3>1.1 <code>agent.yaml</code> 的 <code>name:</code> 字段不展开 <code>${STUDENT_SUFFIX}</code> <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>ERROR: predeploy, failed to update environment for service "research-agent":
+agent.yaml is not valid: template.name not in valid format</code></pre>
+<p><code>name: research-agent-${STUDENT_SUFFIX}</code> 在 validation 时被当字面量读取，包含 <code>$</code>、<code>{</code>、<code>}</code> 不符合 azd agent 名格式（只允许字母数字 + 连字符）。</p>
+<h4>根因</h4>
+<p><code>agent.yaml</code> 是 azd 的 schema validation 文件，<strong>变量插值发生在 validation 之后</strong>。<code>agent.manifest.yaml</code> 在 deploy 时插值是 OK 的，但 <code>agent.yaml</code> 不行。</p>
+<h4>修复</h4>
+<p>在 <code>agent.yaml</code> 把 <code>name:</code> 硬编码：</p>
+<pre><code>kind: hosted
+name: research-agent-stu002      # 不能用 ${STUDENT_SUFFIX}</code></pre>
+<blockquote>README §1.5 没提到 agent.yaml 的这个限制 — 它假设学员只动 agent.manifest.yaml。</blockquote>
+</div>
+
+<div class="issue">
+<h3>1.2 <code>AZURE_AI_PROJECT_ID</code> azd env var 未设置 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>ERROR: Microsoft Foundry project ID is required: AZURE_AI_PROJECT_ID is not set
+Suggestion: run 'azd provision' or connect to an existing project via 'azd ai agent init --project-id &lt;resource-id&gt;'</code></pre>
+<h4>根因</h4>
+<p>azd agent 扩展在 publish 阶段需要 <code>AZURE_AI_PROJECT_ID</code>（<strong>ARM resource ID</strong>），但 README §1.3 只让设置 <code>AZURE_AI_PROJECT_ENDPOINT</code>。<code>.env.example</code> 里两个都列了但 §1.3 的 <code>azd env set</code> 列表漏了它。</p>
+<h4>修复</h4>
+<pre><code>azd env set AZURE_AI_PROJECT_ID "/subscriptions/&lt;sub&gt;/resourceGroups/foundry-workshop/providers/Microsoft.CognitiveServices/accounts/itd-foundry/projects/itd-foundry-workshop"</code></pre>
+</div>
+
+<div class="issue">
+<h3>1.3 <code>FOUNDRY_PROJECT_ENDPOINT</code> azd env var 未设置 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>ERROR: FOUNDRY_PROJECT_ENDPOINT is required: environment variable was not found in the current azd environment</code></pre>
+<h4>根因</h4>
+<p>azd agent 扩展同时认两个变量名 <code>AZURE_AI_PROJECT_ENDPOINT</code> 和 <code>FOUNDRY_PROJECT_ENDPOINT</code>，但实际部署阶段只检查后者。README 完全没提。</p>
+<h4>修复</h4>
+<pre><code>azd env set FOUNDRY_PROJECT_ENDPOINT "$AZURE_AI_PROJECT_ENDPOINT"   # 镜像一份</code></pre>
+</div>
+
+<div class="issue">
+<h3>1.4 shell 命令替换把 azd 的更新告警塞进了 env 变量值 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>ERROR: parse "https://itd-foundry.../itd-foundry-workshop\nTo update, run `brew uninstall azd && brew install ...`/agents/research-agent-stu002/versions?...":
+  net/url: invalid control character in URL</code></pre>
+<p>URL 中间被插入了 <code>\nTo update, run `brew uninstall azd...`</code>。</p>
+<h4>根因</h4>
+<p>azd 命令在每次 stdout 都追加 <code>Update available: 1.25.1 -> 1.25.2</code> 提示。脚本里写 <code>azd env set X "$(azd env get-value Y)"</code>，子命令的提示被一起捕获进变量值。</p>
+<h4>修复</h4>
+<pre><code><span class="diff-del"># ❌ 错的</span>
+azd env set FOUNDRY_PROJECT_ENDPOINT "$(azd env get-value AZURE_AI_PROJECT_ENDPOINT)"
+
+<span class="diff-add"># ✅ 对的（从 .env 直接读）</span>
+set -a; source .env; set +a
+azd env set FOUNDRY_PROJECT_ENDPOINT "$AZURE_AI_PROJECT_ENDPOINT"</code></pre>
+<p>或干脆 <code>azd upgrade</code>（消除告警源）。</p>
+</div>
+
+<div class="issue">
+<h3>1.5 pip 依赖冲突 #1：<code>opentelemetry-instrumentation-httpx&gt;=0.46b0</code> + <code>--pre</code> 引爆解析 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<p>ACR remote build 里 <code>pip install --pre -r requirements.txt</code> 跑了 ~30 秒后 ResolutionImpossible，回溯了 0.46b0 → 0.62b0 一长串 OT 版本。</p>
+<h4>根因</h4>
+<p><code>&gt;=0.46b0</code> 加 <code>--pre</code> 让 pip 在十几个 pre-release 中暴力回溯，每个都和 <code>opentelemetry-sdk</code> 锁的 <code>semantic-conventions==0.63b1</code> 冲突。</p>
+<h4>修复</h4>
+<p>精确 pin 整套 OTel：</p>
+<pre><code>opentelemetry-api==1.40.0
+opentelemetry-sdk==1.40.0
+opentelemetry-exporter-otlp==1.40.0
+opentelemetry-semantic-conventions==0.61b0
+opentelemetry-instrumentation-httpx==0.61b0</code></pre>
+<blockquote>OTel 的 <code>1.X.Y</code> 和 <code>0.Xb0</code> 是配对发布的（数字版本和 instrumentation 的 beta 版必须对齐）。</blockquote>
+</div>
+
+<div class="issue">
+<h3>1.6 pip 依赖冲突 #2：<code>agent-framework 1.4.0</code> 锁死 <code>agent-framework-core==1.4.0</code>，但 hosting 需要 ≥1.5 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>agent-framework 1.4.0 depends on agent-framework-core==1.4.0
+agent-framework-foundry-hosting 1.0.0a260519 depends on agent-framework-core&lt;2 and &gt;=1.5.0</code></pre>
+<h4>根因</h4>
+<p><code>&gt;=1.4.0</code> 让 pip 选了 1.4.0（最低满足）。</p>
+<h4>修复</h4>
+<pre><code>agent-framework>=1.5.0,<1.6.0</code></pre>
+</div>
+
+<div class="issue">
+<h3>1.7 pip 依赖冲突 #3：最新 hosting pre-release 需要还没发布的 core 1.6.0 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<p>bump 到 <code>&gt;=1.5.0</code> 后 pip 选了 hosting 的最新 <code>1.0.0a260521</code>，它需要 <code>agent-framework-core&gt;=1.6.0</code>，但 pypi 上最新只有 1.5.0。</p>
+<h4>根因</h4>
+<p><code>agent-framework-foundry-hosting</code> 是 pre-release，作者每隔几天发新版，对 core 的版本要求步步走在 stable release 前面。</p>
+<h4>修复</h4>
+<p>pin 到上一版可用的：</p>
+<pre><code>agent-framework-foundry-hosting==1.0.0a260519</code></pre>
+</div>
+
+<div class="issue">
+<h3>1.8 postdeploy hook 因 service 名 vs deployed agent 名不一致而 404 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<p>deploy 主流程成功（agent v2 active），但 postdeploy 报：</p>
+<pre><code>ERROR: failed invoking event handlers for 'postdeploy', failed to fetch agent version for research-agent/2:
+RESPONSE 404: not_found
+{"error":{"code":"not_found","message":"Agent research-agent with version 2 not found"}}</code></pre>
+<h4>根因</h4>
+<p><code>azure.yaml</code> 里 service 名是 <code>research-agent</code>（基础名，多学员共用模板），但 deploy 时 agent.yaml 写 <code>name: research-agent-stu002</code>。postdeploy hook（<code>postdeploy-grant-roles.ps1</code> → <code>grant-agent-runtime-roles.ps1</code>）从 azure.yaml 读 service 名 <code>research-agent</code> 去查询 Foundry，404。</p>
+<h4>Workaround</h4>
+<p>手动跑 bash 版的 grant 脚本，显式传 agent 名：</p>
+<pre><code>./scripts/macOSLinux/grant-agent-runtime-roles.sh --agent-name "research-agent-stu002"</code></pre>
+<p>授权完成后 agent 才能调 gpt-5.5 model deployment（否则 invoke 永远 <code>status=failed</code> → <code>server_error</code>）。</p>
+<blockquote><strong>本质修复</strong>：postdeploy hook 内部应该读 azd env 的 <code>AGENT_NAME</code> 而不是 service 名。需要改 PowerShell 脚本（暂未提 PR）。</blockquote>
+</div>
+
+<h2 id="lab2">Lab 2 · 本地 vibe-coding（4 处）</h2>
+
+<div class="issue">
+<h3>2.1 PyPI 国际连接 IncompleteRead，下载断流 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>pip._vendor.urllib3.exceptions.ProtocolError:
+  ('Connection broken: IncompleteRead(2079592 bytes read, 12981832 more expected)', ...)</code></pre>
+<p>每次跑到大概同一个 2MB 进度就断。重试也没用。</p>
+<h4>根因</h4>
+<p>国内访问 pypi.org 的 CDN 节点对大 wheel 包（&gt;10MB）连接不稳定。<code>agent-framework</code> 全家桶有几十个依赖，其中几个大包必踩。</p>
+<h4>修复</h4>
+<p>换清华镜像（或阿里云）：</p>
+<pre><code>pip install --pre --retries 10 --timeout 180 \
+  -i https://pypi.tuna.tsinghua.edu.cn/simple/ \
+  -r requirements-local.txt</code></pre>
+<blockquote>清华镜像的 Pre-release 包同步比 pypi.org 略慢，遇到找不到 <code>agent-framework-foundry-hosting==1.0.0a260519</code> 时加 <code>--extra-index-url https://pypi.org/simple/</code> 兜底。</blockquote>
+</div>
+
+<div class="issue">
+<h3>2.2 <code>agent-dev-cli</code> 与 <code>agent-framework 1.5.0</code> 不兼容 <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>agent-framework 1.5.0 depends on agent-framework-core==1.5.0
+agent-dev-cli 0.0.1b260427 depends on agent-framework-core&lt;1.3.0 and &gt;=1.1.1</code></pre>
+<h4>根因</h4>
+<p><code>Lab-2-vibe-coding/requirements.txt</code> 同时包含 agent-dev-cli（本地 dev 工具）和 agent-framework-foundry-hosting（部署运行时），两者要求的 <code>agent-framework-core</code> 版本不重叠。README 在注释里承认了：</p>
+<pre><code>agent-dev-cli>=0.0.1b260427  # pre-release; install with --pre
+                              # (local dev only — keeps a separate agent-framework-core range)</code></pre>
+<h4>修复</h4>
+<p>拆成两个 requirements 文件 — 一个生产用、一个 dev 用，<strong>不共享 venv</strong>。本地跑直接走 production deps 用 <code>python -m</code>，绕过 agentdev。新增 <code>Lab-2-vibe-coding/requirements-local.txt</code>：</p>
+<pre><code>agent-framework>=1.5.0,<1.6.0
+agent-framework-foundry-hosting==1.0.0a260519
+azure-identity>=1.17.0
+httpx>=0.27.0
+pydantic>=2.7.0
+opentelemetry-api==1.40.0
+opentelemetry-sdk==1.40.0
+opentelemetry-exporter-otlp==1.40.0
+opentelemetry-semantic-conventions==0.61b0
+opentelemetry-instrumentation-httpx==0.61b0
+pytest>=8.0</code></pre>
+<p>启动改用：</p>
+<pre><code>python3 -m src.research_agent.main      # 替代 agentdev run</code></pre>
+<p><strong>副作用</strong>：M5 的 <code>agentdev inspect</code> 不能用。等价信息可从 server log 看到（每次 <code>/responses</code> 会输出完整 trace tree）。</p>
+</div>
+
+<div class="issue">
+<h3>2.3 默认端口是 8088 而不是 README 写的 8087 <span class="label label-info">文档</span></h3>
+<h4>症状</h4>
+<pre><code>curl http://localhost:8087/responses → Connection refused</code></pre>
+<h4>根因</h4>
+<p><code>ResponsesHostServer.run()</code> 默认绑定 <code>0.0.0.0:8088</code>。<code>--port 8087</code> 是 <code>agentdev run</code> 这个 CLI 的参数，不是 main.py 本身的。直接跑 <code>python -m</code> 不会接受 <code>--port</code>，必须改源码或环境变量。</p>
+<h4>修复</h4>
+<p>测试请求直接连 8088：</p>
+<pre><code>curl -X POST http://localhost:8088/responses ...</code></pre>
+<p>或在 <code>main.py</code> 改成显式传 port：</p>
+<pre><code>server.run(port=8087)</code></pre>
+</div>
+
+<div class="issue">
+<h3>2.4 <code>report_builder</code> 假设 Pydantic 输入，LLM 实际传 dict <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<p>tool 被调用后 server log 报：</p>
+<pre><code>File "tools/report_builder.py", line 55, in _validate_citations
+    valid_ids = {s.id for s in sources}
+AttributeError: 'dict' object has no attribute 'id'</code></pre>
+<p>然后整个 <code>/responses</code> 调用变成 <code>tool_call_response: 'Error: Function failed.'</code>，最终 agent 重试或返回不完整答案。</p>
+<h4>根因</h4>
+<p><code>@ai_function</code> 装饰器把 LLM 的 tool-call payload 当字典传入函数；类型注解 <code>sources: list[ReportSource]</code> 不会自动触发 Pydantic 校验/转换。</p>
+<h4>修复</h4>
+<p>在函数体开头显式 <code>model_validate</code>：</p>
+<pre><code>  with tracer.start_as_current_span("report_builder") as span:
+      span.set_attribute("topic", topic)
+      span.set_attribute("section_count", len(sections))
+      span.set_attribute("source_count", len(sources))
+
+<span class="diff-add">+     # Coerce dicts → pydantic (LLM tool-call payloads arrive as raw dicts).
++     sections = [s if isinstance(s, ReportSection) else ReportSection.model_validate(s) for s in sections]
++     sources = [s if isinstance(s, ReportSource) else ReportSource.model_validate(s) for s in sources]
++</span>
+      _validate_citations(sections, sources)
+      sources_filled = _fill_accessed_at(sources)</code></pre>
+<blockquote>这个 bug 在 hosted agent（Lab-1 部署的那个）里<strong>也存在</strong>，但因为部署的 <code>gpt-5.5</code> 模型不一定调 report_builder（不是每个 prompt 都需要），所以 Lab-1 没暴露。Lab-2 用真实 research prompt 才触发。</blockquote>
+</div>
+
+<h2 id="lab3">Lab 3 · 第二个 agent 上 hosted（2 处）</h2>
+
+<div class="issue">
+<h3>3.1 ACR remote build 报 <code>archive/tar: write too long</code> <span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>azd deploy invoice-explainer
+  invoice-explainer: Publishing (Publishing container) [20s]
+WARNING: Remote build failed: archive/tar: write too long
+Falling back to local Docker build.
+  invoice-explainer: Failed ... container publish failed ...</code></pre>
+<p>Lab-1 同样的 <code>Dockerfile + context=../..</code> 当时能跑通，Lab-3 突然炸。</p>
+<h4>根因</h4>
+<p>Lab-2 在 <code>Lab-2-vibe-coding/</code> 下建了一个 <code>.venv/</code>（675 MB）。docker context 是 <code>../..</code> 即整个 <code>foundry_workshop/</code> 仓库，把 venv 也打进去了。<code>archive/tar: write too long</code> 是 Go 的 tar writer 拒绝累计太大的写。</p>
+<h4>确认</h4>
+<pre><code>du -sh Lab-2-vibe-coding/.venv          # 675M
+du -sh .                                 # 686M (几乎全是 venv)</code></pre>
+<h4>修复（应急）</h4>
+<p>临时把 venv 移到 repo 外：</p>
+<pre><code>mv Lab-2-vibe-coding/.venv /tmp/lab2-venv-temp
+azd deploy invoice-explainer
+mv /tmp/lab2-venv-temp Lab-2-vibe-coding/.venv     # deploy 完恢复</code></pre>
+<h4>修复（正解）</h4>
+<p>在 docker context 根（<code>foundry_workshop/</code>）加 <code>.dockerignore</code> 排除 <code>.venv/</code>、<code>__pycache__/</code>、<code>ppt/</code>、其它 Lab 目录等。</p>
+<blockquote>⚠️ <strong>azd ai agent 似乎不读 root <code>.dockerignore</code></strong>：实测加了之后仍然报同样错。最后还是移走 venv 才通过。这是 azd extension 的 bug 或局限。已加到本地 <code>.dockerignore</code>，作为正确性的兜底；但实际部署时仍需手动移走 venv。</blockquote>
+</div>
+
+<div class="issue">
+<h3>3.2 postdeploy hook 同样 404（Lab-1 复现）<span class="label label-blocking">阻塞</span></h3>
+<h4>症状</h4>
+<pre><code>ERROR: failed invoking event handlers for 'postdeploy', failed to fetch agent version for invoice-explainer/1:
+RESPONSE 404: not_found
+{"error":{"code":"not_found","message":"Agent invoice-explainer with version 1 not found"}}</code></pre>
+<h4>根因</h4>
+<p>和 <strong>1.8</strong> 完全相同 — azure.yaml service 名 <code>invoice-explainer</code> ≠ 实际 deployed agent 名 <code>invoice-explainer-stu002</code>。</p>
+<h4>Workaround（与 Lab-1 一致）</h4>
+<pre><code>./scripts/macOSLinux/grant-agent-runtime-roles.sh --agent-name "invoice-explainer-stu002"</code></pre>
+<blockquote>Lab-1 已踩过这个坑，但 hook 没修过，第二次部署再次撞上。<strong>根本修复</strong>需要在 <code>azure.yaml</code> 的 service 名里也加 <code>${STUDENT_SUFFIX}</code>，或者在 hook 脚本读 <code>AGENT_NAME</code> 而不是 service 名。</blockquote>
+</div>
+
+<h2 id="lab4">Lab 4 · trace + dashboard（2 处）</h2>
+
+<div class="issue">
+<h3>4.1 <code>my_total_responses: 0</code> — Foundry per-agent counter 有 lag <span class="label label-info">不阻塞</span></h3>
+<h4>症状</h4>
+<p>刚 invoke 完 hosted agent，立刻跑 <code>fetch-traces.sh</code>，结果：</p>
+<pre><code>"kpi": {
+  "my_total_responses": 0,
+  "project_input_tokens": 212489,
+  "project_output_tokens": 12699,
+  "project_total_tokens": 225188,
+  "project_tool_calls": 30,
+  "my_share_pct": 0
+}</code></pre>
+<p><code>project_*</code> 指标都有数据（说明 trace 数据平面 API 通了），但 <code>my_*</code>（按 agent_name 过滤）为 0。</p>
+<h4>根因</h4>
+<p>Foundry agents 数据平面 API（preview 阶段）的 <strong>per-agent dimension 聚合有几分钟到几十分钟延迟</strong>。<code>project_*</code> 是 namespace 级累加，没 dimension 过滤，所以实时。</p>
+<h4>修复</h4>
+<ol>
+<li><strong>等 5-15 分钟</strong>再跑一次 <code>fetch-traces.sh</code>，per-agent 指标会出现。</li>
+<li>或调更长 window：<code>./fetch-traces.sh --minutes 180</code>（拉过去 3 小时）。</li>
+<li>或干脆<strong>用 <code>project_*</code> 指标做 demo</strong>（dashboard 会显示），强调"自己的份额"是后置统计指标。</li>
+</ol>
+<blockquote>这是 Foundry preview API 的限制，不是脚本 bug。GA 后会改善。</blockquote>
+</div>
+
+<div class="issue">
+<h3>4.2 Hosted agent 偶发 90s 超时 <span class="label label-info">不阻塞</span></h3>
+<h4>症状</h4>
+<p>循环发 5 条 <code>/responses</code>，1/5 几率：</p>
+<pre><code>curl: (28) Operation timed out after 90002 milliseconds with 0 bytes received</code></pre>
+<p>其他 4 条都 <code>status=completed</code>。</p>
+<h4>根因</h4>
+<p>共享 Foundry project 的 gpt-5.5 deployment <strong>被多个学员同时调用</strong>，遇到 LLM 推理排队。<code>background+poll</code> 模式会被 90s 超时切，但服务端实际仍在跑。</p>
+<h4>修复</h4>
+<pre><code># 方式 1: 增大 curl 超时
+curl --max-time 180 ...
+
+# 方式 2: 用 chat-hosted UI（它走 background+poll，最高 10 min 等）
+./scripts/macOSLinux/chat-hosted.sh
+
+# 方式 3: 用 invoke-hosted.sh（内部已实现重试 + poll）
+./scripts/macOSLinux/invoke-hosted.sh --agent-name research-agent-stu002 --prompt "..."</code></pre>
+<blockquote><code>/tmp/agent-server.log</code> 里如果看到 server side 有完成日志但 curl client 超时 → 就是这个 case。</blockquote>
+</div>
+
+<h2 id="summary">汇总表</h2>
+
+<table>
+<thead>
+<tr><th>#</th><th>Lab</th><th>类别</th><th>现象</th><th>是否阻塞</th><th>修复时长</th></tr>
+</thead>
+<tbody>
+<tr><td>0.1</td><td>0</td><td>环境</td><td><code>code</code> 指向 Cursor</td><td>部分</td><td>5min</td></tr>
+<tr><td>0.2</td><td>0</td><td>IDE</td><td>Copilot Chat built-in 无法 CLI 装</td><td>否</td><td>—</td></tr>
+<tr><td>0.3</td><td>0</td><td>IDE</td><td>github.copilot 老扩展 deprecated</td><td>否</td><td>—</td></tr>
+<tr><td>0.4</td><td>0</td><td>脚本 bug</td><td>sanity-check ACR HTTP 411</td><td>是</td><td>10min（已修）</td></tr>
+<tr><td>0.5</td><td>0</td><td>IDE</td><td>maf-agent chatmode 不显示</td><td>否（parked）</td><td>—</td></tr>
+<tr><td>0.6</td><td>0</td><td>UI</td><td>4 个相似 chat panel 混淆</td><td>否</td><td>5min</td></tr>
+<tr><td>0.7</td><td>0</td><td>文档</td><td>azd vs az 双登录态</td><td>否</td><td>—</td></tr>
+<tr><td>1.1</td><td>1</td><td>YAML</td><td>agent.yaml name 不展开变量</td><td>是</td><td>5min</td></tr>
+<tr><td>1.2</td><td>1</td><td>文档缺漏</td><td>AZURE_AI_PROJECT_ID 未列出</td><td>是</td><td>5min</td></tr>
+<tr><td>1.3</td><td>1</td><td>文档缺漏</td><td>FOUNDRY_PROJECT_ENDPOINT 未列出</td><td>是</td><td>5min</td></tr>
+<tr><td>1.4</td><td>1</td><td>shell 陷阱</td><td>azd 更新告警污染 env 值</td><td>是</td><td>10min</td></tr>
+<tr><td>1.5</td><td>1</td><td>pip</td><td>OTel <code>--pre</code> 解析爆炸</td><td>是</td><td>20min</td></tr>
+<tr><td>1.6</td><td>1</td><td>pip</td><td>agent-framework 1.4 vs 1.5 锁版</td><td>是</td><td>5min</td></tr>
+<tr><td>1.7</td><td>1</td><td>pip</td><td>hosting pre-release 走在 core 前面</td><td>是</td><td>5min</td></tr>
+<tr><td>1.8</td><td>1</td><td>hook bug</td><td>postdeploy 用错 agent 名</td><td>是</td><td>10min</td></tr>
+<tr><td>2.1</td><td>2</td><td>网络</td><td>PyPI 国际连接 IncompleteRead</td><td>是</td><td>10min（换镜像）</td></tr>
+<tr><td>2.2</td><td>2</td><td>pip + 文档</td><td>agent-dev-cli vs framework 1.5 不兼容</td><td>是</td><td>15min（绕过 agentdev）</td></tr>
+<tr><td>2.3</td><td>2</td><td>文档</td><td>README 写 8087 实际 8088</td><td>否</td><td>1min</td></tr>
+<tr><td>2.4</td><td>2</td><td>工具 bug</td><td>report_builder 假设 pydantic，LLM 传 dict</td><td>是</td><td>5min</td></tr>
+<tr><td>3.1</td><td>3</td><td>docker</td><td>ACR build <code>tar: write too long</code> (venv 太大)</td><td>是</td><td>5min（移 venv）</td></tr>
+<tr><td>3.2</td><td>3</td><td>hook bug</td><td>postdeploy 同样 404 (复现 1.8)</td><td>是</td><td>1min（手动 grant）</td></tr>
+<tr><td>4.1</td><td>4</td><td>API 限制</td><td>per-agent 指标 lag 5-15min</td><td>否</td><td>—</td></tr>
+<tr><td>4.2</td><td>4</td><td>网络</td><td>hosted invoke 90s 偶发超时</td><td>否</td><td>—</td></tr>
+</tbody>
+</table>
+
+<p><strong>总耗时</strong>：约 3 小时排查（不含 azd deploy 本身的 ~4 分钟 × 4 次重跑）。</p>
+
+<h2 id="readme-fixes">建议改进 README 的地方</h2>
+
+<h3>Lab-0 README</h3>
+<ol>
+<li><strong>§0.2 macOS 工具检查</strong>：加一条 <code>which code</code> 验证，提示如果输出含 <code>Cursor.app</code> 则改用 <code>code-insiders</code>。</li>
+<li><strong>§0.7 路径 A</strong>：明确说明 VS Code Insider 的 Copilot Chat 是内置的，<strong>不要装 deprecated 的老 <code>github.copilot</code> 扩展</strong>。</li>
+<li><strong>§0.7 路径 A 后增加排错小节</strong>：列出 SuperClaude / Cursor 全局 chatmode 可能抢占 <code>chat.modeFilesLocations</code> 的现象。</li>
+</ol>
+
+<h3>Lab-1 README</h3>
+<ol>
+<li><strong>§1.3 azd env set 清单</strong>：补全 <code>AZURE_AI_PROJECT_ID</code> 和 <code>FOUNDRY_PROJECT_ENDPOINT</code> 两行（<strong>必填</strong>）。</li>
+<li><strong>§1.5 改 placeholder name</strong>：明确说 <code>agent.yaml</code> 的 <code>name:</code> 必须<strong>硬编码</strong>（不能用 <code>${STUDENT_SUFFIX}</code>），<code>agent.manifest.yaml</code> 的 <code>name:</code> 可以。</li>
+<li><strong>§1.5 patch 后增加 requirements 兼容性提示</strong>：列出当前可用的 pin 版本组合，避免学员踩 OTel 和 agent-framework 锁版冲突。</li>
+<li><strong>§1.8 postdeploy 修复</strong>：在 azure.yaml 的 service 名也加 <code>${STUDENT_SUFFIX}</code> 或在 grant 脚本内改读 <code>AGENT_NAME</code>。</li>
+</ol>
+
+<h3>Lab-2 README / HANDBOOK</h3>
+<ol>
+<li><strong>§2.4 M4 启动命令</strong>：标注 <code>agentdev run</code> 与 hosting 1.5 不兼容，提供 <code>python -m src.research_agent.main</code> 替代路径。</li>
+<li><strong>§2.4 端口说明</strong>：默认 8088（不是 8087），或在 <code>main.py</code> 显式传 port。</li>
+<li><strong>网络章节</strong>：加一段关于 PyPI 国际访问的提示，列出清华/阿里云镜像 URL。</li>
+<li><strong>拆 requirements</strong>：把 <code>requirements.txt</code> 拆成 <code>requirements-runtime.txt</code>（hosted agent 容器用）和 <code>requirements-dev.txt</code>（agentdev/pytest 用），README 说明两者不能共用 venv。</li>
+<li><strong><code>.venv/</code> 必须放仓库外</strong>或加 <code>.gitignore</code> + <code>.dockerignore</code> — 否则 Lab-3 部署必踩 <code>tar: write too long</code>。</li>
+</ol>
+
+<h3>Lab-3 README</h3>
+<ol>
+<li><strong>§3.6 部署前置</strong>：明确说"如果 Lab-2 在仓库内建了 <code>.venv/</code>，先 <code>mv .venv /tmp/</code>"。</li>
+<li><strong>§3.6 postdeploy 修复</strong>：和 §1.8 一致，给一段"如果 postdeploy 404，手动跑 grant 脚本"的兜底。</li>
+<li><strong>§3.7 验证</strong>：建议用 <code>chat-hosted.sh</code> 或 <code>invoke-hosted.sh</code>（内置重试），避免直接 curl 撞 90s 超时。</li>
+</ol>
+
+<h3>Lab-4 README</h3>
+<ol>
+<li><strong>§数据 schema</strong>：明确写"per-agent 指标有 5-15min lag，project 指标实时"，避免学员以为 dashboard 坏了。</li>
+<li><strong>加 retry 选项</strong>：fetch-traces.sh 现在拉到 <code>my_responses=0</code> 会直接显示 0，建议加 <code>--retry-until-non-zero</code> 选项轮询。</li>
+</ol>
+
+<h3>脚本修复（已在本地）</h3>
+<ul>
+<li><code>scripts/macOSLinux/sanity-check.sh:174</code> 加 <code>Content-Length: 0</code> header。</li>
+<li><code>Lab-2-vibe-coding/tools/report_builder.py:107</code> 加 <code>model_validate</code> dict→pydantic 转换。</li>
+<li>新增 <code>Lab-2-vibe-coding/requirements-local.txt</code> 作为 dev 用纯运行时依赖。</li>
+<li><code>Lab-2-vibe-coding/src/research_agent/main.py</code> <code>__main__</code> 分支加 CORS middleware（本地 chat UI 用 <code>file://</code> origin 调本地 server 需要）。</li>
+<li>新增 <code>.dockerignore</code> 排除 <code>.venv/</code>、<code>ppt/</code>、其他 Lab 目录（azd ai agent 不一定读，但是正确性的兜底）。</li>
+</ul>
+
+<h2 id="final">最终成功状态</h2>
+
+<h3>Lab-0 / Lab-1（hosted agent）</h3>
+<div class="success-banner">
+<span class="check">✅</span> azd auth login --check-status     exit 0<br>
+<span class="check">✅</span> az account show                   "订阅260302"<br>
+<span class="check">✅</span> 9 项 .env 变量<br>
+<span class="check">✅</span> 模型 deployment 'gpt-5.5' 在共享 project 中<br>
+<span class="check">✅</span> Hosted agent 'research-agent-stu002' 可达 + 跑通 (status=completed)<br>
+<span class="check">✅</span> ACR 'itdnd' 可远程构建 (AcrPush + Contributor)
+</div>
+
+<h3>Lab-2（本地 vibe-coding）</h3>
+<div class="success-banner">
+<span class="check">✅</span> persona research-agent lint pass<br>
+<span class="check">✅</span> venv + Lab-2 deps 装好（清华镜像）<br>
+<span class="check">✅</span> python3 -m src.research_agent.main 启动在 0.0.0.0:8088<br>
+<span class="check">✅</span> /responses 真实研究 prompt:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;load_skill → 5 子问题 → web_search × 4 → web_fetch × 8 → report_builder<br>
+<span class="check">✅</span> guardrail prompt 正确拒答 ({refused: true, reason: ..., suggestedAction: ...})<br>
+<span class="check">✅</span> 用 chat 生成第二个 agent invoice-explainer（persona + skill + 3 tools + 6 src files）<br>
+<span class="check">✅</span> 4 类 prompt 全跑通: 烟雾 / 多币种 / 税务 guardrail / PII 脱敏
+</div>
+
+<h3>Lab-3（第二个 agent 上 hosted）</h3>
+<div class="success-banner">
+<span class="check">✅</span> azd deploy invoice-explainer 4m13s (移走 .venv 后)<br>
+<span class="check">✅</span> grant-agent-runtime-roles --agent-name invoice-explainer-stu002 全 4 个 role<br>
+<span class="check">✅</span> hosted /responses 跟本地等价: load_skill → ocr_extract → classify_charges → JSON<br>
+<span class="check">✅</span> sanity-check: research-agent + invoice-explainer 均在线
+</div>
+
+<h3>Lab-4（本地 Observability）</h3>
+<div class="success-banner">
+<span class="check">✅</span> fetch-traces.sh research-agent → data/my-metrics.js<br>
+<span class="check">✅</span> fetch-traces.sh invoice-explainer → data/invoice-metrics.js<br>
+<span class="check">✅</span> index.html dashboard 加载 12 个 5-min buckets<br>
+<span class="check">✅</span> project_input_tokens=212489, project_tool_calls=30 可见<br>
+🟡 my_total_responses=0 (per-agent dimension 有 lag, 不是 bug)
+</div>
+
+<p>agent 中文回答正确、code_interpreter / web_search / web_fetch / report_builder / ocr_extract / classify_charges / currency_normalize 共 <strong>7 个工具</strong>已注册并能调通。</p>
+
+<hr>
+<p class="meta">生成日期 · 2026-05-24 · stu002 · MacBook + VS Code Insider + zsh</p>
+
+</div>
+</body>
+</html>

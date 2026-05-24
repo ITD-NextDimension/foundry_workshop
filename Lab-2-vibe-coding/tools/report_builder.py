@@ -109,6 +109,10 @@ async def report_builder(
         span.set_attribute("section_count", len(sections))
         span.set_attribute("source_count", len(sources))
 
+        # Coerce dicts → pydantic (LLM tool-call payloads arrive as raw dicts).
+        sections = [s if isinstance(s, ReportSection) else ReportSection.model_validate(s) for s in sections]
+        sources = [s if isinstance(s, ReportSource) else ReportSource.model_validate(s) for s in sources]
+
         _validate_citations(sections, sources)
         sources_filled = _fill_accessed_at(sources)
 
