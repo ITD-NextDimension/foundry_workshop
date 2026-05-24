@@ -1,0 +1,54 @@
+# Exclude from Docker build context (azd uses context=../.. = repo root).
+# Without this, ACR remote build fails with "archive/tar: write too long".
+
+# Python venvs (huge — 600+ MB)
+**/.venv/
+**/venv/
+**/.env/
+**/env/
+
+# Python caches
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Secrets — never bake into image
+.env
+.env.local
+**/.env
+**/.env.local
+
+# Big docs / assets (not needed at runtime)
+ppt/
+claudedocs/
+docs/*.pdf
+docs/*.html
+
+# Other agent workspaces (not part of Lab-2 hosted runtime)
+AgentHarness_HostedAgent/
+OpenClaw_AgentHarness/
+CodingAgent/
+Skill_Testing_Agent/
+skill-testing-harness-deploy/
+
+# Lab dirs that don't go into the agent container
+Lab-0-setup/
+Lab-1-deploy-hosted-agent/
+Lab-3-update-hosted-agent/
+Lab-4-observability/
+
+# OS / IDE noise
+.DS_Store
+.git/
+.github/
+.vscode/
+.idea/
+
+# Build artifacts
+build/
+dist/
+*.log
