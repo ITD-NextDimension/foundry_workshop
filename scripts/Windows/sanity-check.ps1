@@ -70,6 +70,8 @@ $clientId  = Resolve-Var 'AZURE_CLIENT_ID'
 $secret    = Resolve-Var 'AZURE_CLIENT_SECRET'
 $tenantId  = Resolve-Var 'AZURE_TENANT_ID'
 $subId     = Resolve-Var 'AZURE_SUBSCRIPTION_ID'
+$projectId = Resolve-Var 'AZURE_AI_PROJECT_ID'
+$acrRg     = Resolve-Var 'AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP'
 
 Write-Result ".env: AZURE_AI_PROJECT_ENDPOINT"      ([bool]$endpoint) $endpoint
 Write-Result ".env: AZURE_AI_MODEL_DEPLOYMENT_NAME" ([bool]$model)    $model
@@ -80,6 +82,7 @@ Write-Result ".env: AZURE_TENANT_ID"                ([bool]$tenantId)
 Write-Result ".env: AZURE_CLIENT_ID"                ([bool]$clientId)
 Write-Result ".env: AZURE_CLIENT_SECRET"            ([bool]$secret)
 Write-Result ".env: AZURE_SUBSCRIPTION_ID"          ([bool]$subId)
+Write-Result ".env: AZURE_AI_PROJECT_ID"            ([bool]$projectId) $projectId
 
 if (-not $ExpectedAgent) {
     if ($suffix) { $ExpectedAgent = "research-agent-$suffix" } else { $ExpectedAgent = "research-agent" }
@@ -122,7 +125,17 @@ if ($endpoint -and $apiKey) {
 # ---------------------------------------------------------------------------
 # ARM (SP) for ACR push capability
 # ---------------------------------------------------------------------------
-if ($acrName -and $clientId -and $secret -and $tenantId -and $subId) {
+function Get-ResourceGroupFromResourceId {
+    param([string]$ResourceId)
+    if ($ResourceId -and $ResourceId -match '^/subscriptions/[^/]+/resourceGroups/([^/]+)/providers/') {
+        return $Matches[1]
+    }
+    return $null
+}
+
+if (-not $acrRg) { $acrRg = Get-ResourceGroupFromResourceId $projectId }
+
+if ($acrName -and $clientId -and $secret -and $tenantId -and $subId -and $acrRg) {
     try {
         $armToken = (Invoke-RestMethod -Method POST `
             -Uri "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token" `
@@ -133,14 +146,14 @@ if ($acrName -and $clientId -and $secret -and $tenantId -and $subId) {
                 scope         = 'https://management.azure.com/.default'
                 grant_type    = 'client_credentials'
             } -TimeoutSec 30).access_token
-        $acrUrl = "https://management.azure.com/subscriptions/$subId/resourceGroups/foundry-workshop/providers/Microsoft.ContainerRegistry/registries/$acrName/listBuildSourceUploadUrl?api-version=2019-06-01-preview"
+        $acrUrl = "https://management.azure.com/subscriptions/$subId/resourceGroups/$acrRg/providers/Microsoft.ContainerRegistry/registries/$acrName/listBuildSourceUploadUrl?api-version=2019-06-01-preview"
         $r = Invoke-RestMethod -Method POST -Uri $acrUrl -Headers @{ Authorization = "Bearer $armToken" } -TimeoutSec 15
-        Write-Result "ACR '$acrName' 可远程构建 (AcrPush + Contributor)" ([bool]$r.uploadUrl)
+        Write-Result "ACR '$acrName' 可远程构建 (AcrPush + Contributor)" ([bool]$r.uploadUrl) "resourceGroup=$acrRg"
     } catch {
-        Write-Result "ACR '$acrName' 可远程构建 (AcrPush + Contributor)" $false $_.Exception.Message
+        Write-Result "ACR '$acrName' 可远程构建 (AcrPush + Contributor)" $false "resourceGroup=$acrRg; $($_.Exception.Message)"
     }
 } else {
-    Write-Result "ACR '$acrName' 可远程构建" $false "缺 ACR name 或 SP 凭据"
+    Write-Result "ACR '$acrName' 可远程构建" $false "缺 ACR name、SP 凭据或 resource group (AZURE_AI_PROJECT_ID / AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP)"
 }
 
 Write-Host "`n如有 ❌, 把整段输出贴到助教频道。`n" -ForegroundColor Cyan

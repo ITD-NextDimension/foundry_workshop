@@ -32,7 +32,10 @@ param(
     [string]$TenantId,
     [string]$SubscriptionId,
     [string]$Endpoint,
+    [string]$ProjectId,
     [string]$AcrName,
+    [string]$FoundryResourceGroup,
+    [string]$AcrResourceGroup,
     [string]$EnvFile,
     [string]$ApiVersion = '2025-11-15-preview'
 )
@@ -84,7 +87,10 @@ $ClientSecret   = Resolve-Var $ClientSecret   'AZURE_CLIENT_SECRET'
 $TenantId       = Resolve-Var $TenantId       'AZURE_TENANT_ID'
 $SubscriptionId = Resolve-Var $SubscriptionId 'AZURE_SUBSCRIPTION_ID'
 $Endpoint       = Resolve-Var $Endpoint       'AZURE_AI_PROJECT_ENDPOINT'
+$ProjectId      = Resolve-Var $ProjectId      'AZURE_AI_PROJECT_ID'
 $AcrName        = Resolve-Var $AcrName        'AZURE_CONTAINER_REGISTRY_NAME'
+$FoundryResourceGroup = Resolve-Var $FoundryResourceGroup 'AZURE_RESOURCE_GROUP'
+$AcrResourceGroup     = Resolve-Var $AcrResourceGroup     'AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP'
 if (-not $AgentName) {
     $AgentName = Resolve-Var $null 'AGENT_NAME'
     if (-not $AgentName) {
@@ -102,7 +108,7 @@ if ($missing.Count -gt 0) {
     exit 1
 }
 
-# Derive Foundry scope strings from project endpoint
+# Derive Foundry scope strings from project endpoint + ARM project ID.
 # Endpoint format: https://<account>.services.ai.azure.com/api/projects/<project>
 if ($Endpoint -notmatch '^https://([^.]+)\.services\.ai\.azure\.com/api/projects/([^/?#]+)') {
     Write-Err "AZURE_AI_PROJECT_ENDPOINT format unexpected: $Endpoint"
@@ -111,10 +117,31 @@ if ($Endpoint -notmatch '^https://([^.]+)\.services\.ai\.azure\.com/api/projects
 $accountName = $Matches[1]
 $projectName = $Matches[2]
 
+if ($ProjectId) {
+    if ($ProjectId -match '^/subscriptions/([^/]+)/resourceGroups/([^/]+)/providers/Microsoft\.CognitiveServices/accounts/([^/]+)/projects/([^/]+)$') {
+        $projectSubscriptionId = $Matches[1]
+        $FoundryResourceGroup = $Matches[2]
+        $accountName = $Matches[3]
+        $projectName = $Matches[4]
+        if ($SubscriptionId -and $SubscriptionId -ne $projectSubscriptionId) {
+            Write-Warn "AZURE_SUBSCRIPTION_ID ($SubscriptionId) differs from AZURE_AI_PROJECT_ID subscription ($projectSubscriptionId); using AZURE_SUBSCRIPTION_ID for roleDefinitionId."
+        }
+    } else {
+        Write-Warn "AZURE_AI_PROJECT_ID format unexpected; falling back to endpoint + AZURE_RESOURCE_GROUP."
+    }
+}
+if (-not $FoundryResourceGroup) {
+    Write-Err "缺 Foundry resource group: set AZURE_AI_PROJECT_ID or AZURE_RESOURCE_GROUP."
+    exit 1
+}
+if (-not $AcrResourceGroup) { $AcrResourceGroup = $FoundryResourceGroup }
+
 Write-Info "agent     = $AgentName"
 Write-Info "account   = $accountName"
 Write-Info "project   = $projectName"
 Write-Info "acr       = $AcrName"
+Write-Info "foundryRg = $FoundryResourceGroup"
+Write-Info "acrRg     = $AcrResourceGroup"
 
 # ---------------------------------------------------------------------------
 # 2. Acquire tokens (no az/azd needed)
@@ -191,8 +218,8 @@ function Grant-Role {
 # 5. Grant the four runtime roles
 # ---------------------------------------------------------------------------
 $script:hadFailure = $false
-$acrScope     = "/subscriptions/$SubscriptionId/resourceGroups/foundry-workshop/providers/Microsoft.ContainerRegistry/registries/$AcrName"
-$accountScope = "/subscriptions/$SubscriptionId/resourceGroups/foundry-workshop/providers/Microsoft.CognitiveServices/accounts/$accountName"
+$acrScope     = "/subscriptions/$SubscriptionId/resourceGroups/$AcrResourceGroup/providers/Microsoft.ContainerRegistry/registries/$AcrName"
+$accountScope = "/subscriptions/$SubscriptionId/resourceGroups/$FoundryResourceGroup/providers/Microsoft.CognitiveServices/accounts/$accountName"
 $projectScope = "$accountScope/projects/$projectName"
 
 Grant-Role -Scope $acrScope     -PrincipalId $instancePid  -RoleId $ACR_PULL_ROLE_ID       -Label "AcrPull        on ACR     -> instance"
