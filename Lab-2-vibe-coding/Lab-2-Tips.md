@@ -147,6 +147,24 @@ azd ai agent monitor --session-id <id> --tail 120
 
 ---
 
+### sanity-check — ACR `listBuildSourceUploadUrl` 失败
+
+**现象**：`sanity-check.*` 报 `ACR '<name>' 可远程构建 (AcrPush + Contributor) ❌`，详情里带 `listBuildSourceUploadUrl`。
+
+**根因 + 修复**（按 HTTP 状态码区分）：
+
+| 状态码 | 根因 | 修复 |
+|--------|------|------|
+| `403 Forbidden` | SP 缺 `AcrPush` + `Contributor`（远程构建要 `Microsoft.ContainerRegistry/registries/listBuildSourceUploadUrl/action`） | 把整段输出贴给助教，请在该 ACR 上给你的 SP 授 `AcrPush` + `Contributor` |
+| `404` / `ResourceGroupNotFound` / `ResourceNotFound` | 脚本默认从 `AZURE_AI_PROJECT_ID` 推导 ACR 资源组，但 ACR 与 project 不在同一资源组 | 在根 `.env` 设 `AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP=<acr 资源组>` 后重跑 |
+
+**诊断技巧**：先用 `az` 核对 ACR 真实名称与资源组，再决定是授权问题还是资源组问题：
+```bash
+az acr show -n <acr-name> --query "{name:name, rg:resourceGroup}" -o table
+```
+
+---
+
 ### Chat UI 专属坑 — localStorage 旧配置 + 命名错位
 
 **两个叠加问题**：

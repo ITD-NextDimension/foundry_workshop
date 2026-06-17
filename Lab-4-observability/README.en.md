@@ -129,6 +129,8 @@ start ..\Lab-4-observability\index.html
 open ../Lab-4-observability/index.html      # Linux: xdg-open ../Lab-4-observability/index.html
 ```
 
+> On Linux, if you see `xdg-open: command not found`, run `sudo apt install xdg-utils` first (or open the `index.html` manually in a browser).
+
 Dashboard areas:
 
 | Area | Meaning |

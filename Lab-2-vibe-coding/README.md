@@ -176,7 +176,7 @@ python3 ../scripts/lint-persona.py personas/research-agent.md
 
 **Inspect**：确认新 tool 没有硬编码 key，异常路径返回可诊断错误，description 足够具体让模型知道何时调用。
 
-**Verify**：
+**Verify**（先确保已装 `pytest`：`pip install pytest`，或已跑过 M4 的 `pip install -r requirements.txt`）：
 
 ```powershell
 pytest tests/unit/test_tools.py
@@ -201,7 +201,7 @@ pytest tests/unit/test_tools.py
 
 ```powershell
 cd Lab-2-vibe-coding
-pip install -r requirements.txt
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 . ..\scripts\Windows\load-env.ps1
 agentdev run src\research_agent\main.py --port 8087
 ```
@@ -217,7 +217,7 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:8087/responses" -ContentTy
 
 ```bash
 cd Lab-2-vibe-coding
-pip install -r requirements.txt
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 source ../scripts/macOSLinux/load-env.sh
 agentdev run src/research_agent/main.py --port 8087
 ```

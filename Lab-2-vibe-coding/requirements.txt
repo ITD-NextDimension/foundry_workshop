@@ -8,4 +8,4 @@ opentelemetry-exporter-otlp>=1.25.0
 opentelemetry-instrumentation-httpx>=0.46b0
 pydantic>=2.7.0
 pytest>=8.0
-agent-dev-cli>=0.0.1b260427  # pre-release; install with --pre (local dev only — keeps a separate agent-framework-core range)
+agent-dev-cli  # local dev only (agentdev CLI); leave unpinned so pip 能解析出可安装的版本（旧的 >=0.0.1b260427 钉版会报错）

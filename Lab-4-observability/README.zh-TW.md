@@ -129,6 +129,8 @@ start ..\Lab-4-observability\index.html
 open ../Lab-4-observability/index.html      # Linux: xdg-open ../Lab-4-observability/index.html
 ```
 
+> Linux 上若提示 `xdg-open: command not found`，先 `sudo apt install xdg-utils`（或手動用瀏覽器開啟該 `index.html`）。
+
 頁面包含：
 
 | 區域 | 說明 |

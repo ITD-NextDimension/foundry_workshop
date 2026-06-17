@@ -51,6 +51,9 @@ Notes:
 
 - This workshop uses ACR remote build. Students do **not** need Docker or Podman locally.
 - Azure CLI `az` is only a troubleshooting tool, not the main path. Scripts and Lab 4 use REST/OAuth2 directly.
+- No `azd` yet? Windows `winget install Microsoft.Azd`; macOS/Linux `curl -fsSL https://aka.ms/install-azd.sh | bash`; or just ask Copilot to install it.
+- No `python` (>= 3.11) yet? Install from [python.org/downloads](https://www.python.org/downloads/); Windows can also use `winget install Python.Python.3.12`, Ubuntu `sudo apt install python3 python3-pip`.
+- On restricted networks (e.g. mainland China), set a one-time global pip mirror so every later `pip install` uses it: `pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple`.
 
 ## 0.4 Clone the Repository and Fill `.env`
 
@@ -198,5 +201,6 @@ Here is the Lab 0 readiness check output. Decide whether I can enter Lab 1. If n
 | `azd extension install` times out | Switch networks or ask the TA for an offline extension package |
 | Copilot Chat does not show `maf-agent` | Rerun `install-maf-copilot-skills.*`, then run `Developer: Reload Window` |
 | `copilot` command is missing or requires login | Prefer the VS Code main path; ask the TA to help install/sign in to Copilot TUI if needed |
+| `sanity-check` reports `ACR ... remote build ... failed` (`listBuildSourceUploadUrl`) | **403**: the SP lacks `AcrPush`+`Contributor` — paste the full output to the TA and request the role grant; **404**: the ACR and project are in different resource groups — set `AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP=<acr resource group>` in `.env` and rerun. Use `az acr show -n <acr> --query id` to confirm the ACR name/resource group |
 
 → [Lab 1 · First hosted agent deployment](../Lab-1-deploy-hosted-agent/README.en.md)

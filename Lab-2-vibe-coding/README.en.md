@@ -176,7 +176,7 @@ Requirements:
 
 **Inspect**: Confirm the new tool has no hard-coded keys, returns diagnosable errors, and has a concrete enough description for the model to choose it.
 
-**Verify**:
+**Verify** (first make sure `pytest` is installed: `pip install pytest`, or after running M4's `pip install -r requirements.txt`):
 
 ```powershell
 pytest tests/unit/test_tools.py
@@ -201,7 +201,7 @@ If I switch to my own business agent, tell me the minimum imports, tool list, an
 
 ```powershell
 cd Lab-2-vibe-coding
-pip install -r requirements.txt
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 . ..\scripts\Windows\load-env.ps1
 agentdev run src\research_agent\main.py --port 8087
 ```
@@ -217,7 +217,7 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:8087/responses" -ContentTy
 
 ```bash
 cd Lab-2-vibe-coding
-pip install -r requirements.txt
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 source ../scripts/macOSLinux/load-env.sh
 agentdev run src/research_agent/main.py --port 8087
 ```

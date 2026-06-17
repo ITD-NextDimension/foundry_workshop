@@ -51,6 +51,9 @@ jq --version         # bash 腳本需要；macOS: brew install jq；Ubuntu: apt-
 
 - 本工作坊使用 ACR remote build，學員本機**不需要 Docker / Podman**。
 - `az` CLI 只作為排障工具，不是主路徑；腳本和 Lab 4 都直接用 REST/OAuth2。
+- 還沒裝 `azd`？Windows `winget install Microsoft.Azd`；macOS/Linux `curl -fsSL https://aka.ms/install-azd.sh | bash`；或直接讓 Copilot 幫你安裝。
+- 還沒裝 `python`（≥ 3.11）？從 [python.org/downloads](https://www.python.org/downloads/) 安裝；Windows 也可 `winget install Python.Python.3.12`，Ubuntu `sudo apt install python3 python3-pip`。
+- 網路受限（如中國大陸）建議給 pip 設一次性全域清華源（之後所有 `pip install` 都走鏡像）：`pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple`。
 
 ## 0.4 Clone 倉庫並填寫 `.env`
 
@@ -198,5 +201,6 @@ azd auth login --check-status
 | `azd extension install` 網路逾時 | 換網路，或找助教提供離線擴充包 |
 | Copilot Chat 看不到 `maf-agent` | 重新跑 `install-maf-copilot-skills.*`，然後 `Developer: Reload Window` |
 | `copilot` 命令不存在或要登入 | 優先使用 VS Code 主路徑；需要終端路徑時找助教完成 Copilot TUI 安裝/登入 |
+| `sanity-check` 報 `ACR ... 可遠程構建 ... 失敗`（`listBuildSourceUploadUrl`） | **403**：SP 缺 `AcrPush`+`Contributor`，把整段輸出貼給助教申請授權；**404**：ACR 與 project 不在同一資源組，在 `.env` 設 `AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP=<acr 資源組>` 再重跑。用 `az acr show -n <acr> --query id` 可核對 ACR 名/資源組 |
 
 → [Lab 1 · 首次部署 hosted agent](../Lab-1-deploy-hosted-agent/README.zh-TW.md)
