@@ -88,3 +88,18 @@ python3 ../scripts/lint-persona.py personas/research-agent.md
   - `azd`（可选，仅用于 `azd env get-value` fallback）
   - `code`（可选，仅 `install-maf-copilot-skills.sh` 用于检测扩展）
 - **凭据来源优先级**（两套脚本一致）：命令行参数 > 进程环境变量 > workshop 根 `.env` > `azd env`
+
+## Troubleshooting
+
+### chat-hosted.sh 显示旧的 endpoint/agent 信息
+
+**症状**：运行 `chat-hosted.sh --agent-name "research-agent-stu100"` 后打开的浏览器仍显示旧的 endpoint 或 agent 名称，导致 401 错误。
+
+**原因**：浏览器 localStorage 缓存了旧配置。虽然脚本生成的 URL 包含正确参数，但页面优先级尚待改进。
+
+**解决**：
+1. 在浏览器开发者工具（F12）→ Application → LocalStorage → 选中 `file://` → 删除 `foundry-workshop-chat-cfg` 条目
+2. 刷新页面（Cmd+R 或 Ctrl+R）
+3. 或在浏览器 console 运行 `localStorage.clear(); location.reload();`
+
+**永久修复**：脚本已更新为 URL 参数严格覆盖 localStorage，确保 `--agent-name` 和 `--api-key` 参数总是生效。

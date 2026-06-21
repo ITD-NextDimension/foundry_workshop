@@ -190,6 +190,7 @@ azd deploy research-agent
 | `azd deploy` ACR push / remote build 慢 | 第一次推 base image 较慢，等待即可 |
 | hosted 调用返回 401 | 检查 `.env` 的 `FOUNDRY_API_KEY` 和 project endpoint |
 | hosted 调用返回 `status=failed` 且错误含 `DefaultAzureCredential failed` | 先手动跑一次 `pwsh ./hooks/postdeploy-grant-roles.ps1 -AgentName "research-agent-<STUDENT_SUFFIX>"`（脚本会给 instance + blueprint 都授 `Azure AI User`）；随后用 `invoke-hosted.sh --prompt "ping" --retries 8` 重测 |
+| `chat-hosted.sh` 打开后显示旧的 endpoint / agent 名、报 401 或 agent not found | 浏览器 localStorage 缓存问题。按 F12 → Application → LocalStorage → 删除 `file://` 下的 `foundry-workshop-chat-cfg`；或在 console 运行 `localStorage.clear(); location.reload();` |
 | agent 名冲突 | 确认 `STUDENT_SUFFIX` 是否与讲师分配一致 |
 | `azd up` 失败 | 跑错命令；只使用 `azd deploy research-agent` |
 

@@ -233,19 +233,24 @@ const state = {
 // ---------------------------------------------------------------------------
 function loadCfg() {
   let cfg = { endpoint: '', agent: '', apiKey: '', store: false };
-  try {
-    const saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-    delete saved.token; delete saved.apiVersion;
-    Object.assign(cfg, saved);
-  } catch {}
+  
+  // If URL hash contains config, use ONLY that (ignore localStorage for URL-provided values)
   if (location.hash.startsWith('#cfg=')) {
     try {
       const decoded = JSON.parse(atob(decodeURIComponent(location.hash.slice(5))));
       delete decoded.token; delete decoded.apiVersion;
       Object.assign(cfg, decoded);
       localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+      return cfg;  // Return immediately with URL-based config
     } catch (e) { console.warn('bad cfg hash:', e); }
   }
+  
+  // Fall back to localStorage only if no URL hash
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    delete saved.token; delete saved.apiVersion;
+    Object.assign(cfg, saved);
+  } catch {}
   return cfg;
 }
 
