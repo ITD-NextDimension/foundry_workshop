@@ -1,0 +1,44 @@
+# Local Python environments and caches
+.venv
+.venv/
+.venv/**
+venv
+venv/
+venv/**
+__pycache__
+__pycache__/
+__pycache__/**
+*.py[cod]
+.pytest_cache
+.pytest_cache/
+.pytest_cache/**
+.mypy_cache
+.mypy_cache/
+.mypy_cache/**
+.ruff_cache
+.ruff_cache/
+.ruff_cache/**
+.coverage
+htmlcov/
+
+# Local azd/dev state
+.azure/
+.foundry/
+
+# Secrets and local overrides
+.env
+.env.*
+
+# Git/editor/OS noise
+.git/
+.gitignore
+.DS_Store
+.vscode/
+.idea/
+
+# Test-only files are not needed in the hosted runtime image
+tests/
+
+# Logs and temporary outputs
+*.log
+*.tmp
