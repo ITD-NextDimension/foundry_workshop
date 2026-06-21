@@ -149,6 +149,8 @@ azd deploy research-agent
 
 返回 JSON 中 `status` 为 `completed`，且有文本输出即通过。
 
+> `invoke-hosted.sh`（macOS / Linux）已内置瞬时失败重试（默认 `--retries 5`）。如果遇到偶发 `server_error`，脚本会自动重试；也可手动提高到 `--retries 8`。
+
 让 Copilot 根据验证结果做一次发布复盘：
 
 ```text
@@ -180,10 +182,14 @@ azd deploy research-agent
 
 | 现象 | 处理 |
 |------|------|
+| 首次运行 `azd deploy` 先进入 tool first-run，并在安装 Bicep 扩展时报错 | 不是部署阻塞项。可继续执行；若希望跳过该检查，先执行 `azd config set tool.firstRunCompleted true` 或设置 `AZD_SKIP_FIRST_RUN=true` |
+| `ERROR: agent definition file not found: no agent.yaml` | `hooks.prepackage` 未成功渲染。先运行 `pwsh ./hooks/render-agent-yaml.ps1`，确认 `src/research_agent/agent.yaml` 与 `src/research_agent/agent.manifest.yaml` 已生成，再重试 deploy |
+| `postdeploy` 报 `AZURE_TENANT_ID is not set in the environment` | 在 `Lab-2-vibe-coding` 目录先 `source ../scripts/macOSLinux/load-env.sh`（Windows: `. ..\scripts\Windows\load-env.ps1`），再手动执行 postdeploy：`pwsh ./hooks/postdeploy-grant-roles.ps1 -AgentName "research-agent-<STUDENT_SUFFIX>"` |
+| `postdeploy` 报 `Agent research-agent with version 1 not found` | 事件处理阶段解析到了不带 suffix 的默认名。手动运行：`pwsh ./hooks/postdeploy-grant-roles.ps1 -AgentName "research-agent-<STUDENT_SUFFIX>"`，然后再做 invoke 验证 |
 | `azd deploy` 提示缺 `AZURE_AI_PROJECT_ID` | 回 Lab 1 §1.4 重新同步 azd env |
 | `azd deploy` ACR push / remote build 慢 | 第一次推 base image 较慢，等待即可 |
 | hosted 调用返回 401 | 检查 `.env` 的 `FOUNDRY_API_KEY` 和 project endpoint |
-| hosted 调用返回 403 / runtime server error | postdeploy hook 可能未完成赋权；重跑 `azd deploy research-agent` 或联系助教 |
+| hosted 调用返回 `status=failed` 且错误含 `DefaultAzureCredential failed` | 先手动跑一次 `pwsh ./hooks/postdeploy-grant-roles.ps1 -AgentName "research-agent-<STUDENT_SUFFIX>"`（脚本会给 instance + blueprint 都授 `Azure AI User`）；随后用 `invoke-hosted.sh --prompt "ping" --retries 8` 重测 |
 | agent 名冲突 | 确认 `STUDENT_SUFFIX` 是否与讲师分配一致 |
 | `azd up` 失败 | 跑错命令；只使用 `azd deploy research-agent` |
 

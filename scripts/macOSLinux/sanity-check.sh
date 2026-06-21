@@ -97,6 +97,7 @@ endpoint=$(resolve_var 'AZURE_AI_PROJECT_ENDPOINT')
 model=$(resolve_var 'AZURE_AI_MODEL_DEPLOYMENT_NAME')
 suffix=$(resolve_var 'STUDENT_SUFFIX')
 acr_name=$(resolve_var 'AZURE_CONTAINER_REGISTRY_NAME')
+acr_rg=$(resolve_var 'AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP')
 api_key=$(resolve_var 'FOUNDRY_API_KEY')
 client_id=$(resolve_var 'AZURE_CLIENT_ID')
 secret=$(resolve_var 'AZURE_CLIENT_SECRET')
@@ -170,8 +171,8 @@ if [[ -n "$acr_name" && -n "$client_id" && -n "$secret" && -n "$tenant_id" && -n
     arm_token=$(echo "$token_resp" | jq -r '.access_token // empty' 2>/dev/null)
 
     if [[ -n "$arm_token" ]]; then
-        acr_url="https://management.azure.com/subscriptions/$sub_id/resourceGroups/foundry-workshop/providers/Microsoft.ContainerRegistry/registries/$acr_name/listBuildSourceUploadUrl?api-version=2019-06-01-preview"
-        resp=$(curl -fsS --max-time 15 -X POST -H "Authorization: Bearer $arm_token" "$acr_url" 2>/dev/null) || resp=""
+        acr_url="https://management.azure.com/subscriptions/$sub_id/resourceGroups/${acr_rg:-foundry-workshop}/providers/Microsoft.ContainerRegistry/registries/$acr_name/listBuildSourceUploadUrl?api-version=2019-06-01-preview"
+        resp=$(curl -fsS --max-time 15 -X POST -H "Authorization: Bearer $arm_token" -d '' "$acr_url" 2>/dev/null) || resp=""
         upload=$(echo "$resp" | jq -r '.uploadUrl // empty' 2>/dev/null)
         if [[ -n "$upload" ]]; then
             write_result "ACR '$acr_name' 可远程构建 (AcrPush + Contributor)" "true"

@@ -201,6 +201,6 @@ azd auth login --check-status
 | `azd extension install` 网络超时 | 换网络，或找助教提供离线扩展包 |
 | Copilot Chat 看不到 `maf-agent` | 重新跑 `install-maf-copilot-skills.*`，然后 `Developer: Reload Window` |
 | `copilot` 命令不存在或要登录 | 优先使用 VS Code 主路径；需要终端路径时找助教完成 Copilot TUI 安装/登录 |
-| `sanity-check` 报 `ACR ... 可远程构建 ... 失败`（`listBuildSourceUploadUrl`） | **403**：SP 缺 `AcrPush`+`Contributor`，把整段输出贴给助教申请授权；**404**：ACR 与 project 不在同一资源组，在 `.env` 设 `AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP=<acr 资源组>` 再重跑。用 `az acr show -n <acr> --query id` 可核对 ACR 名/资源组 |
+| `sanity-check` 报 `ACR ... 可远程构建 ... 失败`（`listBuildSourceUploadUrl`） | **第 1 步**：在 `.env` 添加 `AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP=<acr 真实资源组>`（用 `az acr show -n <acr> --query resourceGroup -o tsv` 查询）；**第 2 步**：确保脚本已包含资源组支持（bash 脚本应有 `acr_rg=$(resolve_var ...)` 和 `-d ''` 参数，PowerShell 已支持）；**第 3 步**：重跑 sanity-check；**若仍失败**：**403** = 权限缺失（AcrPush+Contributor），贴整段输出给助教申请授权；**411** = curl 缺 Content-Length（应已在最新脚本中修复），重新 git pull；**404** = 资源组/ACR 名不对，再核对第 1 步 |
 
 → [Lab 1 · 首次部署 hosted agent](../Lab-1-deploy-hosted-agent/README.md)

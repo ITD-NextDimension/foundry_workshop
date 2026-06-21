@@ -12,7 +12,8 @@
 # 学员的 SP 持有 RG-scoped `User Access Administrator` (RBAC condition v2 约束: 只能给上面两个角色 ID
 # 做 assign), 所以本脚本反复跑安全无害, 已存在的 assignment 会跳过。
 #
-# 全部读 `azd env get-value` + workshop 根 .env (不需要 az login)。幂等。
+# 全部读 `azd env get-value` + workshop 根 .env (不需要 az login)。支持
+# `AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP` 与 `AZURE_AI_PROJECT_ID` 推导资源组，幂等。
 #
 # 用法:
 #   ./scripts/macOSLinux/grant-agent-runtime-roles.sh
@@ -120,6 +121,9 @@ TENANT_ID=$(resolve_var       "$TENANT_ID_ARG"     'AZURE_TENANT_ID')
 SUBSCRIPTION_ID=$(resolve_var "$SUB_ID_ARG"        'AZURE_SUBSCRIPTION_ID')
 ENDPOINT=$(resolve_var        "$ENDPOINT_ARG"      'AZURE_AI_PROJECT_ENDPOINT')
 ACR_NAME=$(resolve_var        "$ACR_NAME_ARG"      'AZURE_CONTAINER_REGISTRY_NAME')
+PROJECT_ID=$(resolve_var      ""                   'AZURE_AI_PROJECT_ID')
+FOUNDRY_RG=$(resolve_var      ""                   'AZURE_RESOURCE_GROUP')
+ACR_RG=$(resolve_var          ""                   'AZURE_CONTAINER_REGISTRY_RESOURCE_GROUP')
 if [[ -z "$AGENT_NAME" ]]; then
     AGENT_NAME=$(resolve_var "" 'AGENT_NAME')
     if [[ -z "$AGENT_NAME" ]]; then
@@ -148,10 +152,30 @@ fi
 ACCOUNT_NAME="${BASH_REMATCH[1]}"
 PROJECT_NAME="${BASH_REMATCH[2]}"
 
+if [[ -n "$PROJECT_ID" && "$PROJECT_ID" =~ ^/subscriptions/([^/]+)/resourceGroups/([^/]+)/providers/Microsoft\.CognitiveServices/accounts/([^/]+)/projects/([^/]+)$ ]]; then
+    project_sub="${BASH_REMATCH[1]}"
+    FOUNDRY_RG="${BASH_REMATCH[2]}"
+    ACCOUNT_NAME="${BASH_REMATCH[3]}"
+    PROJECT_NAME="${BASH_REMATCH[4]}"
+    if [[ -n "$SUBSCRIPTION_ID" && "$SUBSCRIPTION_ID" != "$project_sub" ]]; then
+        warn "AZURE_SUBSCRIPTION_ID ($SUBSCRIPTION_ID) differs from AZURE_AI_PROJECT_ID subscription ($project_sub); using AZURE_SUBSCRIPTION_ID for roleDefinitionId."
+    fi
+fi
+
+if [[ -z "$FOUNDRY_RG" ]]; then
+    err "缺 Foundry resource group: set AZURE_AI_PROJECT_ID or AZURE_RESOURCE_GROUP."
+    exit 1
+fi
+if [[ -z "$ACR_RG" ]]; then
+    ACR_RG="$FOUNDRY_RG"
+fi
+
 info "agent     = $AGENT_NAME"
 info "account   = $ACCOUNT_NAME"
 info "project   = $PROJECT_NAME"
 info "acr       = $ACR_NAME"
+info "foundryRg = $FOUNDRY_RG"
+info "acrRg     = $ACR_RG"
 
 # ---- Acquire tokens ----
 get_oauth_token() {
@@ -223,14 +247,16 @@ grant_role() {
     rm -f "$tmp"
 }
 
-ACR_SCOPE="/subscriptions/$SUBSCRIPTION_ID/resourceGroups/foundry-workshop/providers/Microsoft.ContainerRegistry/registries/$ACR_NAME"
-ACCOUNT_SCOPE="/subscriptions/$SUBSCRIPTION_ID/resourceGroups/foundry-workshop/providers/Microsoft.CognitiveServices/accounts/$ACCOUNT_NAME"
+ACR_SCOPE="/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$ACR_RG/providers/Microsoft.ContainerRegistry/registries/$ACR_NAME"
+ACCOUNT_SCOPE="/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$FOUNDRY_RG/providers/Microsoft.CognitiveServices/accounts/$ACCOUNT_NAME"
 PROJECT_SCOPE="$ACCOUNT_SCOPE/projects/$PROJECT_NAME"
 
 grant_role "$ACR_SCOPE"     "$INSTANCE_PID"  "$ACR_PULL_ROLE_ID"      "AcrPull        on ACR     -> instance"
 grant_role "$ACR_SCOPE"     "$BLUEPRINT_PID" "$ACR_PULL_ROLE_ID"      "AcrPull        on ACR     -> blueprint"
 grant_role "$ACCOUNT_SCOPE" "$INSTANCE_PID"  "$AZURE_AI_USER_ROLE_ID" "Azure AI User  on account -> instance"
 grant_role "$PROJECT_SCOPE" "$INSTANCE_PID"  "$AZURE_AI_USER_ROLE_ID" "Azure AI User  on project -> instance"
+grant_role "$ACCOUNT_SCOPE" "$BLUEPRINT_PID" "$AZURE_AI_USER_ROLE_ID" "Azure AI User  on account -> blueprint"
+grant_role "$PROJECT_SCOPE" "$BLUEPRINT_PID" "$AZURE_AI_USER_ROLE_ID" "Azure AI User  on project -> blueprint"
 
 if [[ "$HAD_FAILURE" -ne 0 ]]; then
     err "One or more grants failed — see errors above."

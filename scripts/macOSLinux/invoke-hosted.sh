@@ -27,6 +27,7 @@ AGENT_NAME=""
 PROMPT="Hello, who are you?"
 STATUS_ONLY=false
 NO_STORE=false
+RETRIES=5
 API_KEY_ARG=""; ENDPOINT_ARG=""; ENV_FILE=""
 
 while [[ $# -gt 0 ]]; do
@@ -35,6 +36,7 @@ while [[ $# -gt 0 ]]; do
         --prompt)     PROMPT="$2"; shift 2 ;;
         --status-only) STATUS_ONLY=true; shift ;;
         --no-store)   NO_STORE=true; shift ;;
+        --retries)    RETRIES="$2"; shift 2 ;;
         --api-key)    API_KEY_ARG="$2"; shift 2 ;;
         --endpoint)   ENDPOINT_ARG="$2"; shift 2 ;;
         --env-file)   ENV_FILE="$2"; shift 2 ;;
@@ -128,11 +130,33 @@ printf "${c_gry}→ prompt: %s${c_rst}\n" "$PROMPT"
 resp_file="$(mktemp -t invoke-hosted-XXXXXX)"
 trap 'rm -f "$resp_file"' EXIT
 
-http_code=$(curl -sS -o "$resp_file" -w '%{http_code}' --max-time 120 \
-    -X POST "$RESPONSES_URL" \
-    -H "api-key: $API_KEY" \
-    -H "content-type: application/json; charset=utf-8" \
-    --data-binary "$BODY" || echo 000)
+attempt=1
+while true; do
+    http_code=$(curl -sS -o "$resp_file" -w '%{http_code}' --max-time 120 \
+        -X POST "$RESPONSES_URL" \
+        -H "api-key: $API_KEY" \
+        -H "content-type: application/json; charset=utf-8" \
+        --data-binary "$BODY" || echo 000)
+
+    status=$(jq -r '.status // empty' < "$resp_file" 2>/dev/null || echo "")
+    err_code=$(jq -r '.error.code // empty' < "$resp_file" 2>/dev/null || echo "")
+
+    should_retry="false"
+    if [[ ! "$http_code" =~ ^2 ]]; then
+        if [[ "$http_code" =~ ^5|^000$ ]]; then
+            should_retry="true"
+        fi
+    elif [[ "$status" == "failed" && "$err_code" == "server_error" ]]; then
+        should_retry="true"
+    fi
+
+    if [[ "$should_retry" == "true" && "$attempt" -lt "$RETRIES" ]]; then
+        printf "${c_yel}⚠️  transient invoke error (attempt %s/%s), retrying...${c_rst}\n" "$attempt" "$RETRIES"
+        attempt=$((attempt + 1))
+        continue
+    fi
+    break
+done
 
 if [[ ! "$http_code" =~ ^2 ]]; then
     printf "${c_red}❌ Invocation failed (HTTP %s)${c_rst}\n" "$http_code"

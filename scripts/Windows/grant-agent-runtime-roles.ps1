@@ -215,7 +215,7 @@ function Grant-Role {
 }
 
 # ---------------------------------------------------------------------------
-# 5. Grant the four runtime roles
+# 5. Grant runtime roles (instance + blueprint)
 # ---------------------------------------------------------------------------
 $script:hadFailure = $false
 $acrScope     = "/subscriptions/$SubscriptionId/resourceGroups/$AcrResourceGroup/providers/Microsoft.ContainerRegistry/registries/$AcrName"
@@ -226,6 +226,8 @@ Grant-Role -Scope $acrScope     -PrincipalId $instancePid  -RoleId $ACR_PULL_ROL
 Grant-Role -Scope $acrScope     -PrincipalId $blueprintPid -RoleId $ACR_PULL_ROLE_ID       -Label "AcrPull        on ACR     -> blueprint"
 Grant-Role -Scope $accountScope -PrincipalId $instancePid  -RoleId $AZURE_AI_USER_ROLE_ID  -Label "Azure AI User  on account -> instance"
 Grant-Role -Scope $projectScope -PrincipalId $instancePid  -RoleId $AZURE_AI_USER_ROLE_ID  -Label "Azure AI User  on project -> instance"
+Grant-Role -Scope $accountScope -PrincipalId $blueprintPid -RoleId $AZURE_AI_USER_ROLE_ID  -Label "Azure AI User  on account -> blueprint"
+Grant-Role -Scope $projectScope -PrincipalId $blueprintPid -RoleId $AZURE_AI_USER_ROLE_ID  -Label "Azure AI User  on project -> blueprint"
 
 if ($script:hadFailure) {
     Write-Err "One or more grants failed — see errors above."
