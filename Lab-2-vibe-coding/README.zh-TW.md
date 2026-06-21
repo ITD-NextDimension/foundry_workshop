@@ -241,8 +241,11 @@ curl -s -X POST http://localhost:8087/responses \
 **Brief**：Inspector 不是看熱鬧的 UI，而是用來確認模型是否按 persona/skill/tool 約定行動。
 
 ```text
-agentdev inspect
+agentdev info
+agentdev run src/research_agent/main.py
 ```
+
+> 說明：目前 `agentdev` 版本已移除 `inspect` 子命令；請使用 `info` + `run`。
 
 在瀏覽器裡發一條應被拒答的問題：
 
@@ -250,12 +253,12 @@ agentdev inspect
 X 公司值不值得投資？買入還是賣出？
 ```
 
-預期：persona 按 guardrail 拒絕投資建議。把 Inspector 中的 span 或截圖交給 Copilot，讓它解釋為什麼沒有繼續呼叫工具。
+預期：persona 按 guardrail 拒絕投資建議。把 DevUI / Inspector 中的 span 或截圖交給 Copilot，讓它解釋為什麼沒有繼續呼叫工具。
 
 **Reflect prompt**：
 
 ```text
-這是 Inspector 的 span / 截圖文字。請說明：
+這是 DevUI / Inspector 的 span / 截圖文字。請說明：
 1. 哪一步呼叫了模型
 2. 哪些 tool 被呼叫或被跳過
 3. 結果是否滿足 persona contract

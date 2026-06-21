@@ -241,8 +241,11 @@ Expected output is JSON matching the persona output contract, at least including
 **Brief**: Inspector is not a demo toy; it verifies whether the model followed persona/skill/tool agreements.
 
 ```text
-agentdev inspect
+agentdev info
+agentdev run src/research_agent/main.py
 ```
+
+> Note: in current `agentdev` versions, the `inspect` subcommand was removed. Use `info` + `run`.
 
 In the browser, send a prompt that should be refused:
 
@@ -250,12 +253,12 @@ In the browser, send a prompt that should be refused:
 Is Company X worth investing in? Buy or sell?
 ```
 
-Expected result: the persona refuses investment advice according to guardrails. Give the Inspector span or screenshot to Copilot and ask why it did not continue calling tools.
+Expected result: the persona refuses investment advice according to guardrails. Give the DevUI / Inspector span or screenshot to Copilot and ask why it did not continue calling tools.
 
 **Reflect prompt**:
 
 ```text
-Here is the Inspector span / screenshot text. Explain:
+Here is the DevUI / Inspector span / screenshot text. Explain:
 1. Which step called the model
 2. Which tools were called or skipped
 3. Whether the result satisfies the persona contract
